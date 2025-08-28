@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Inicio{% endblock %}
+{% block meta_description %}Tu servicio de taxi rápido, seguro y confiable.{% endblock %}
+{% block meta_keywords %}taxi, aeropuerto, reservas, transporte, seguro{% endblock %}
+
+{% block content %}
+<section id="hero" class="hero section dark-background">
+    <div class="video-background">
+        <video autoplay="" muted="" loop="" playsinline="">
+            <source src="../../static/img/video/bg_video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    <div class="hero-content">
+        <div class="container position-relative">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 data-aos="fade-up" data-aos-delay="100">Donde Tu Viaje Comienza con Confianza</h1>
+                    <p data-aos="fade-up" data-aos-delay="200">Viaja con comodidad, seguridad y puntualidad en cada trayecto hacia tu destino.</p>
+                    <div class="hero-buttons" data-aos="fade-up" data-aos-delay="300">
+                        <a href="{% url 'reservas' %}" class="btn btn-primary">Reserva Ahora</a>
+                        <a href="#services" class="btn btn-outline">Contactanos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section><section id="about" class="about section">
+    <div class="container section-title" data-aos="fade-up">
+        <span class="subtitle">Nosotros</span>
+        <h2>Quiénes Somos</h2>
+        <p>En LETCO ofrecemos un servicio de taxi confiable, seguro y puntual para que llegues siempre a tu destino sin preocupaciones.</p>
+    </div>
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right" data-aos-delay="200">
+                <div class="content">
+                    <h2>Tu viaje al aeropuerto, sin preocupaciones.</h2>
+                    <p class="lead">Ofrecemos un servicio de taxi confiable y puntual que te lleva directamente al aeropuerto o te espera a tu llegada. Con conductores profesionales y un sistema de reserva sencillo, garantizamos un inicio o final perfecto para tu viaje.</p>
+                    <div class="stats-wrapper">
+                        <div class="stat-item">
+                            <span class="number purecounter" data-purecounter-start="0" data-purecounter-end="8" data-purecounter-duration="1"></span>
+                            <span class="label">Años de Excelencia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left" data-aos-delay="300">
+                <div class="image-wrapper">
+                    <img src="../../static/img/about/about_1.jpg" alt="About us" class="img-fluid">
+                    <div class="floating-element">
+                        <div class="quote-content">
+                            <blockquote>"La excelencia en el servicio no ocurre por casualidad. Es el resultado de un compromiso firme, una planificación precisa y una ejecución impecable en cada trayecto."</blockquote>
+                            <cite>— LETCO</cite>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br><br>
+</section>{% endblock %}

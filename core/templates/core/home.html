@@ -1,0 +1,25 @@
+{% extends 'core/index.html' %}
+{% block title %}Inicio{% endblock %}
+{% block content %}
+    <div class="p-5 mb-4 bg-light rounded-3 text-center">
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">Bienvenido a Taxi Ya!</h1>
+            <p class="col-md-8 fs-4 mx-auto">Tu servicio de taxi rápido, seguro y confiable.</p>
+            <a class="btn btn-primary btn-lg" href="{% url 'reservas' %}" role="button">Reserva Ahora</a>
+        </div>
+    </div>
+    <div class="row text-center">
+        <div class="col-md-4">
+            <h2>Servicio 24/7</h2>
+            <p>Estamos disponibles las 24 horas del día, los 7 días de la semana.</p>
+        </div>
+        <div class="col-md-4">
+            <h2>Conductores Confiables</h2>
+            <p>Nuestros conductores son profesionales y están altamente calificados.</p>
+        </div>
+        <div class="col-md-4">
+            <h2>Precios Justos</h2>
+            <p>Ofrecemos tarifas competitivas y transparentes, sin sorpresas.</p>
+        </div>
+    </div>
+{% endblock %}

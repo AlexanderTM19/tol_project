@@ -1,0 +1,292 @@
+{% extends 'core/administrador.html' %}
+{% load static %}
+
+{% block title %}Choferes{% endblock %}
+{% block content %}
+<div class="container section-title mt-4" data-aos="fade-up">
+    <div class="row">
+        <div class="col col-lg-12">
+            <h2>Lista de choferes</h2>
+            <hr>
+        </div>
+    </div>
+</div>
+
+<div class="container" data-aos="fade-up">
+    <div class="card">
+        <div class="card-header d-flex justify-content-end">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearClienteModal">
+                <i class="fas fa-plus-circle me-2"></i>Crear Chofer
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="clientsTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>RUT</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chofer in choferes %}
+                        <tr>
+                            <td>{{ chofer.rut }}</td>
+                            <td>{{ chofer.nombre }}</td>
+                            <td>{{ chofer.telefono }}</td>
+                            <td>{{ chofer.correo }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Ver historial"
+                                        data-bs-target="#historialModal">
+                                    <i class="fa-solid fa-book"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#vehiculoModal"
+                                        data-bs-title="Información vehículo">
+                                    <i class="fa-solid fa-car"></i>
+                                </button>
+                                <button class="btn btn-sm btn-info text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#infoChoferModal"
+                                        data-bs-title="Información chofer">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historialModalLabel">Historial de servicios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha Reserva</th>
+                                <th>Cliente</th>
+                                <th>Tarifa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-05-20</td>
+                                <td>Manuel García</td>
+                                <td>$55.000</td>
+                            </tr>
+                            <tr>
+                                <td>2024-05-18</td>
+                                <td>Ana Sánchez</td>
+                                <td>$70.000</td>
+                            </tr>
+                            <tr>
+                                <td>2024-05-15</td>
+                                <td>Manuel García</td>
+                                <td>$25.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearClienteModal" tabindex="-1" aria-labelledby="crearClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearClienteModalLabel">Crear nuevo chofer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="rutInput" class="form-label">RUT</label>
+                            <input type="text" class="form-control" id="rutInput">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nombreInput" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombreInput">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="telefonoInput" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefonoInput">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="correoInput" class="form-label">Correo</label>
+                            <input type="email" class="form-control" id="correoInput">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="paisInput" class="form-label">País</label>
+                            <input type="text" class="form-control" id="paisInput">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="direccionInput" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccionInput">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="vehiculoModal" tabindex="-1" aria-labelledby="vehiculoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vehiculoModalLabel">Información del Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoMarca" class="form-label">Marca</label>
+                            <input type="text" class="form-control" id="vehiculoMarca" value="Nissan" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoModelo" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="vehiculoModelo" value="Versa" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoAnio" class="form-label">Año</label>
+                            <input type="text" class="form-control" id="vehiculoAnio" value="2022" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoPatente" class="form-label">Patente</label>
+                            <input type="text" class="form-control" id="vehiculoPatente" value="ABCD-12" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoColor" class="form-label">Color</label>
+                            <input type="text" class="form-control" id="vehiculoColor" value="Rojo" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="revTecnica" class="form-label">Revisión Técnica</label>
+                            <input type="text" class="form-control text-success fw-bold" id="revTecnica" value="Correcta" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="soapEstado" class="form-label">SOAP</label>
+                            <input type="text" class="form-control text-danger fw-bold" id="soapEstado" value="Vencido" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="infoChoferModal" tabindex="-1" aria-labelledby="infoChoferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoChoferModalLabel">Información del Chofer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="choferRut" class="form-label">RUT</label>
+                            <input type="text" class="form-control" id="choferRut" value="12.345.678-9" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="choferNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="choferNombre" value="Juan Pérez" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="choferTelefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="choferTelefono" value="+56 9 1234 5678" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="choferCorreo" class="form-label">Correo</label>
+                            <input type="email" class="form-control" id="choferCorreo" value="juan.perez@example.com" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="choferPais" class="form-label">País</label>
+                            <input type="text" class="form-control" id="choferPais" value="Chile" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="choferDireccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="choferDireccion" value="Av. Siempre Viva 742" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#clientsTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json"
+            },
+            "lengthMenu": [5, 10, 25, 50],
+            "pageLength": 10
+        });
+
+        // Inicializar tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    });
+</script>
+{% endblock %}

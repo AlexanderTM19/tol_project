@@ -1,0 +1,239 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Reservas{% endblock %}
+{% block meta_description %}Tu servicio de taxi rápido, seguro y confiable.{% endblock %}
+{% block meta_keywords %}taxi, aeropuerto, reservas, transporte, seguro{% endblock %}
+{% block content %}
+<section id="reserva" class="contact section">
+    <div class="container section-title" data-aos="fade-up">
+        <span class="subtitle">Reserva</span>
+        <h2>Reserva tu viaje</h2>
+        <p>Cuéntanos a dónde te diriges</p>
+    </div>
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="contact-form-container">
+                    <form id="booking-form" action="#" method="post" class="php-email-form contact-form">
+                        <div id="step-1">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-6">
+                                    <div class="form-field">
+                                        <label for="from-location" class="field-label">Desde:</label>
+                                        <input type="text" name="from_location" class="form-input" id="from-location"
+                                            placeholder="Origen" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-lg-6">
+                                    <div class="form-field">
+                                        <label for="to-location" class="field-label">Hasta:</label>
+                                        <input type="text" class="form-input" name="to_location" id="to-location"
+                                            placeholder="Destino" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 col-lg-6">
+                                    <div class="form-field">
+                                        <label for="reservation-datetime" class="field-label">Fecha y Hora de
+                                            Reserva:</label>
+                                        <input type="datetime-local" class="form-input" name="reservation_datetime"
+                                            id="reservation-datetime" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="my-3">
+                                <div class="loading"></div>
+                                <div class="error-message"></div>
+                                <div class="sent-message"></div>
+                            </div>
+                            <button type="button" id="next-button" class="send-button">
+                                Siguiente
+                                <span class="button-arrow">→</span>
+                            </button>
+                        </div>
+
+                        <div id="step-2" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-6">
+                                    <div class="form-field">
+                                        <label for="from-location" class="field-label">Nombre:</label>
+                                        <input type="text" name="from_location" class="form-input" id="from-location"
+                                            placeholder="Escriba..." required>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-lg-6">
+                                    <div class="form-field">
+                                        <label for="to-location" class="field-label">Teléfono:</label>
+                                        <input type="text" class="form-input" name="to_location" id="to-location"
+                                            placeholder="Escriba..." required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12">
+                                    <div class="form-field">
+                                        <label for="from-location" class="field-label">Email:</label>
+                                        <input type="text" name="from_location" class="form-input" id="from-location"
+                                            placeholder="...@gmail.com" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-field">
+                                        <label for="pax-count" class="field-label">Número de personas:</label>
+                                        <select name="pax_count" id="pax-count" class="form-select" required>
+                                            <option value="">Seleccione...</option>
+                                            {% for i in "1234"|make_list %}
+                                            <option value="{{ i }}">{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-field">
+                                        <label for="pax-count" class="field-label">Número de maletas:</label>
+                                        <select name="pax_count" id="pax-count" class="form-select" required>
+                                            <option value="">Seleccione...</option>
+                                            {% for i in "123"|make_list %}
+                                            <option value="{{ i }}">{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row vehicle-options">
+                                <div class="col-md-6 mb-3" id="taxi-4-option">
+                                    <div class="vehicle-card p-3 border rounded">
+                                        <h4 class="card-title">Taxi (hasta 4 personas)</h4>
+                                        <p class="card-text">Ideal para grupos pequeños. Confort y seguridad.</p>
+                                        <input type="radio" name="vehicle" value="taxi-4" id="taxi-4"
+                                            class="form-check-input" required>
+                                        <label class="form-check-label" for="taxi-4">
+                                            Seleccionar
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="my-3">
+                                <div class="loading"></div>
+                                <div class="error-message"></div>
+                                <div class="sent-message"></div>
+                            </div>
+                            <button type="submit" class="send-button">
+                                Reservar
+                                <span class="button-arrow">→</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="step-3" style="display: none;">
+    <div id="success-alert" class="alert alert-success d-none text-center" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <strong>¡Solicitud de reserva enviada!</strong> Su solicitud ha sido enviada con éxito.
+        Será contactado cuando le aprueben o rechacen la misma.
+    </div>
+
+    <div class="my-3">
+        <div class="loading"></div>
+        <div class="error-message"></div>
+        <div class="sent-message"></div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lógica para la validación de la fecha y hora
+        const dateTimeInput = document.getElementById('reservation-datetime');
+
+        function setMinDateTime() {
+            const now = new Date();
+            // Asegurarse de que los minutos sean un múltiplo de 5 para compatibilidad
+            const currentMinutes = now.getMinutes();
+            const roundedMinutes = Math.ceil(currentMinutes / 5) * 5;
+            now.setMinutes(roundedMinutes);
+            if (roundedMinutes >= 60) {
+                now.setHours(now.getHours() + 1);
+                now.setMinutes(0);
+            }
+
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            dateTimeInput.min = minDateTime;
+        }
+
+        // Establecer la fecha y hora mínima al cargar la página
+        setMinDateTime();
+
+        // Opcional: Actualizar el valor mínimo cada minuto para mantener la precisión
+        setInterval(setMinDateTime, 60000);
+
+
+        // Lógica para el formulario de múltiples pasos
+        const nextButton = document.getElementById('next-button');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const form = document.getElementById('booking-form');
+
+        const successAlert = document.getElementById('success-alert');
+
+        nextButton.addEventListener('click', function (event) {
+            // Validar que los campos del paso 1 estén llenos y que la fecha/hora sea válida
+            const fromLocation = document.getElementById('from-location').value;
+            const toLocation = document.getElementById('to-location').value;
+            const reservationDateTime = document.getElementById('reservation-datetime').value;
+
+            if (fromLocation && toLocation && reservationDateTime) {
+                // Validación adicional para la fecha y hora
+                const selectedDateTime = new Date(reservationDateTime);
+                const now = new Date();
+
+                if (selectedDateTime >= now) {
+                    step1.style.display = 'none';
+                    step2.style.display = 'block';
+                } else {
+                    alert('Por favor, selecciona una fecha y hora que no haya pasado.');
+                }
+            } else {
+                form.reportValidity(); // Muestra mensajes de error de validación del navegador
+            }
+        });
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            step2.style.display = 'none';
+
+            successAlert.classList.remove('d-none');
+
+            step3.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = "{% url 'inicio' %}";
+            }, 5000); // Se mostrará por 5 segundos
+        });
+    });
+</script>
+<style>
+    /* Estilos opcionales para la opción deshabilitada */
+    .disabled-option {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .disabled-option input[type="radio"] {
+        cursor: not-allowed;
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

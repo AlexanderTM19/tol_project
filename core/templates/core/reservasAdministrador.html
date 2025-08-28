@@ -1,0 +1,494 @@
+{% extends 'core/administrador.html' %}
+{% load static %}
+
+{% block title %}Reservas{% endblock %}
+{% block content %}
+<div class="container section-title mt-4" data-aos="fade-up">
+    <div class="row">
+        <div class="col col-lg-12">
+            <h2>Reservas</h2>
+            <hr>
+        </div>
+    </div>
+</div>
+
+<div class="container" data-aos="fade-up">
+    <div class="card">
+        <div class="card-header d-flex justify-content-end">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearEventoModal">
+                <i class="fas fa-plus-circle me-2"></i>Nueva Reserva Manual
+            </button>
+            &nbsp;&nbsp;
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#webReservasModal">
+                <i class="fas fa-plus-circle me-2"></i>Nueva Reserva Web
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearEventoModal" tabindex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearEventoModalLabel">Crear nueva reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCrearEvento">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="eventoFechaInicio" class="form-label">Fecha de inicio</label>
+                            <input type="date" class="form-control" id="eventoFechaInicio" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="eventoHoraInicio" class="form-label">Hora de inicio</label>
+                            <input type="time" class="form-control" id="eventoHoraInicio" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventoClienteNombre" class="form-label">Nombre del Cliente</label>
+                        <input type="text" class="form-control" id="eventoClienteNombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventoClienteTelefono" class="form-label">Teléfono del Cliente</label>
+                        <input type="text" class="form-control" id="eventoClienteTelefono">
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventoClienteCorreo" class="form-label">Correo del Cliente</label>
+                        <input type="email" class="form-control" id="eventoClienteCorreo">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="eventoDesde" class="form-label">Desde</label>
+                            <input type="text" class="form-control" id="eventoDesde" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="eventoHasta" class="form-label">Hasta</label>
+                            <input type="text" class="form-control" id="eventoHasta" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventoChofer" class="form-label">Chofer Designado</label>
+                        <select class="form-select" id="eventoChofer" required>
+                            <option value="" selected disabled>Seleccione un chofer</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="Ana Torres">Ana Torres</option>
+                            <option value="Carlos Rojas">Carlos Rojas</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="guardarEventoBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="infoReservaModal" tabindex="-1" aria-labelledby="infoReservaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoReservaModalLabel">Detalles de la Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="infoFecha" class="form-label">Fecha</label>
+                            <input type="text" class="form-control" id="infoFecha" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="infoHora" class="form-label">Hora</label>
+                            <input type="text" class="form-control" id="infoHora" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="infoClienteNombre" class="form-label">Nombre del Cliente</label>
+                        <input type="text" class="form-control" id="infoClienteNombre" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="infoClienteTelefono" class="form-label">Teléfono del Cliente</label>
+                        <input type="text" class="form-control" id="infoClienteTelefono" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="infoClienteCorreo" class="form-label">Correo del Cliente</label>
+                        <input type="email" class="form-control" id="infoClienteCorreo" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="infoDesde" class="form-label">Desde</label>
+                            <input type="text" class="form-control" id="infoDesde" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="infoHasta" class="form-label">Hasta</label>
+                            <input type="text" class="form-control" id="infoHasta" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="infoChofer" class="form-label">Chofer Designado</label>
+                        <input type="text" class="form-control" id="infoChofer" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="webReservasModal" tabindex="-1" aria-labelledby="webReservasModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-full-width modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="webReservasModalLabel">Reservas Web Pendientes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Correo</th>
+                                <th>Desde</th>
+                                <th>Hasta</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Personas</th>
+                                <th>Maletas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservasWebTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="seleccionarChoferModal" tabindex="-1" aria-labelledby="seleccionarChoferModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="seleccionarChoferModalLabel">Asociar Chofer a la Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Seleccione un chofer para asociarlo a esta reserva:</p>
+                <form id="formSeleccionarChofer">
+                    <div class="mb-3">
+                        <label for="choferSeleccionado" class="form-label">Choferes</label>
+                        <select class="form-select" id="choferSeleccionado" required>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarAsignacionBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .modal-full-width {
+        max-width: 80%;
+        width: 80%;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            navLinks: true,
+            editable: true,
+            selectable: true,
+            dayMaxEvents: true,
+            events: [
+                {
+                    title: 'Reserva 1',
+                    start: '2025-08-20T10:30:00',
+                    extendedProps: {
+                        clienteNombre: 'Juan Pérez',
+                        clienteTelefono: '+56 9 1234 5678',
+                        clienteCorreo: 'juan.perez@example.com',
+                        desde: 'Quilicura',
+                        hasta: 'Aeropuerto SCL',
+                        chofer: 'Juan Pérez'
+                    },
+                    color: '#28a745'
+                },
+                {
+                    title: 'Reserva 2',
+                    start: '2025-08-22T14:00:00',
+                    extendedProps: {
+                        clienteNombre: 'María Gómez',
+                        clienteTelefono: '+56 9 8765 4321',
+                        clienteCorreo: 'maria.gomez@example.com',
+                        desde: 'Providencia',
+                        hasta: 'Centro de Santiago',
+                        chofer: 'Ana Torres'
+                    },
+                    color: '#007bff'
+                },
+                {
+                    title: 'Mantención de Vehículo',
+                    start: '2025-08-28T09:00:00',
+                    extendedProps: {
+                        clienteNombre: 'N/A',
+                        clienteTelefono: 'N/A',
+                        clienteCorreo: 'N/A',
+                        desde: 'N/A',
+                        hasta: 'Taller Mecánico',
+                        chofer: 'Carlos Rojas'
+                    },
+                    color: '#dc3545'
+                },
+                {
+                    title: 'Reserva 3',
+                    start: '2025-09-05T10:00:00',
+                    extendedProps: {
+                        clienteNombre: 'Ana Torres',
+                        clienteTelefono: '+56 9 1111 2222',
+                        clienteCorreo: 'ana.torres@example.com',
+                        desde: 'Las Condes',
+                        hasta: 'Aeropuerto SCL',
+                        chofer: 'Juan Pérez'
+                    },
+                    color: '#6c757d'
+                }
+            ],
+            // Se elimina la función dateClick para que solo se pueda crear reservas con el botón
+            eventClick: function (info) {
+                var event = info.event;
+                var modal = new bootstrap.Modal(document.getElementById('infoReservaModal'));
+
+                var start = event.start;
+                var formattedDate = start.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                var formattedTime = start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                document.getElementById('infoFecha').value = formattedDate;
+                document.getElementById('infoHora').value = formattedTime;
+                document.getElementById('infoClienteNombre').value = event.extendedProps.clienteNombre;
+                document.getElementById('infoClienteTelefono').value = event.extendedProps.clienteTelefono;
+                document.getElementById('infoClienteCorreo').value = event.extendedProps.clienteCorreo;
+                document.getElementById('infoDesde').value = event.extendedProps.desde;
+                document.getElementById('infoHasta').value = event.extendedProps.hasta;
+                document.getElementById('infoChofer').value = event.extendedProps.chofer;
+
+                modal.show();
+            }
+        });
+
+        calendar.render();
+
+        document.getElementById('guardarEventoBtn').addEventListener('click', function () {
+            var clienteNombre = document.getElementById('eventoClienteNombre').value;
+            var clienteTelefono = document.getElementById('eventoClienteTelefono').value;
+            var clienteCorreo = document.getElementById('eventoClienteCorreo').value;
+            var desde = document.getElementById('eventoDesde').value;
+            var hasta = document.getElementById('eventoHasta').value;
+            var chofer = document.getElementById('eventoChofer').value;
+            var fechaInicio = document.getElementById('eventoFechaInicio').value;
+            var horaInicio = document.getElementById('eventoHoraInicio').value;
+
+            if (clienteNombre && desde && hasta && chofer && fechaInicio && horaInicio) {
+                var eventoStart = fechaInicio + 'T' + horaInicio + ':00';
+
+                calendar.addEvent({
+                    title: 'Reserva - ' + clienteNombre,
+                    start: eventoStart,
+                    extendedProps: {
+                        clienteNombre: clienteNombre,
+                        clienteTelefono: clienteTelefono,
+                        clienteCorreo: clienteCorreo,
+                        desde: desde,
+                        hasta: hasta,
+                        chofer: chofer
+                    },
+                    color: '#ffc107'
+                });
+
+                // 💡 Cambio clave para asegurar que el modal se cierre correctamente
+                var modalElement = document.getElementById('crearEventoModal');
+                var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                $('#crearEventoModal').modal('hide');
+                $('.modal-backdrop').remove();
+
+                document.getElementById('formCrearEvento').reset();
+            } else {
+                alert('El nombre del cliente, el origen, el destino, el chofer, la fecha y la hora de inicio son obligatorios.');
+            }
+        });
+        const reservasWeb = [
+            { id: 1, nombre: 'Luis Gárate', telefono: '987654321', correo: 'luis.garate@example.com', personas: 2, maletas: 3, desde: 'Santiago Centro', hasta: 'Aeropuerto SCL', fecha: '2025-08-29', hora: '15:00' },
+            { id: 2, nombre: 'Sofía Soto', telefono: '912345678', correo: 'sofia.soto@example.com', personas: 4, maletas: 5, desde: 'Viña del Mar', hasta: 'Las Condes', fecha: '2025-08-30', hora: '08:00' },
+            { id: 3, nombre: 'Pedro Orellana', telefono: '998877665', correo: 'pedro.orellana@example.com', personas: 1, maletas: 2, desde: 'Providencia', hasta: 'Vitacura', fecha: '2025-09-01', hora: '18:30' }
+        ];
+
+        // Referencias a los modales y botones
+        const nuevaReservaWebBtn = document.querySelector('[data-bs-target="#webReservasModal"]');
+        const reservasWebTableBody = document.getElementById('reservasWebTableBody');
+        const seleccionarChoferModal = new bootstrap.Modal(document.getElementById('seleccionarChoferModal'));
+        const confirmarAsignacionBtn = document.getElementById('confirmarAsignacionBtn');
+        const choferSeleccionadoSelect = document.getElementById('choferSeleccionado');
+        let reservaPendiente = null;
+
+        // Abre el modal de reservas web y llena la tabla
+        nuevaReservaWebBtn.addEventListener('click', function () {
+            llenarTablaReservasWeb();
+            const modal = new bootstrap.Modal(document.getElementById('webReservasModal'));
+            modal.show();
+        });
+
+        // Llena la tabla de reservas web
+        function llenarTablaReservasWeb() {
+            reservasWebTableBody.innerHTML = '';
+            reservasWeb.forEach(reserva => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${reserva.nombre}</td>
+                    <td>${reserva.telefono}</td>
+                    <td>${reserva.correo}</td>
+                    <td>${reserva.desde}</td>
+                    <td>${reserva.hasta}</td>
+                    <td>${reserva.fecha}</td>
+                    <td>${reserva.hora}</td>
+                    <td>${reserva.personas}</td>
+                    <td>${reserva.maletas}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success aceptar-btn me-2" data-id="${reserva.id}"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-sm btn-danger rechazar-btn" data-id="${reserva.id}"><i class="fas fa-times"></i></button>
+                    </td>
+                `;
+                reservasWebTableBody.appendChild(row);
+            });
+            agregarEventosBotones();
+        }
+
+        // Agrega event listeners a los botones de la tabla
+        function agregarEventosBotones() {
+            document.querySelectorAll('.aceptar-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const id = parseInt(this.dataset.id);
+                    reservaPendiente = reservasWeb.find(r => r.id === id);
+                    if (reservaPendiente) {
+                        llenarSelectChoferes();
+                        seleccionarChoferModal.show();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.rechazar-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const row = this.closest('tr');
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('¿Está seguro de que desea rechazar esta reserva?')) {
+                        // Eliminar la reserva de la lista y actualizar la tabla
+                        const index = reservasWeb.findIndex(r => r.id === id);
+                        if (index !== -1) {
+                            reservasWeb.splice(index, 1);
+                        }
+                        // Reemplazar los botones con el icono de bloqueo
+                        const accionesCell = row.querySelector('td:last-child');
+                        accionesCell.innerHTML = '<i class="fas fa-ban text-danger"></i>';
+                    }
+                });
+            });
+        }
+
+        // Llena el select de choferes
+        function llenarSelectChoferes() {
+            choferSeleccionadoSelect.innerHTML = '<option value="" selected disabled>Seleccione un chofer</option>';
+            // Aquí deberías obtener la lista real de choferes de tu backend
+            // Por ahora, usaremos los mismos del modal de reserva manual
+            const choferes = ['Juan Pérez', 'Ana Torres', 'Carlos Rojas'];
+            choferes.forEach(chofer => {
+                const option = document.createElement('option');
+                option.value = chofer;
+                option.textContent = chofer;
+                choferSeleccionadoSelect.appendChild(option);
+            });
+        }
+
+        // Maneja la asignación del chofer y la adición al calendario
+        confirmarAsignacionBtn.addEventListener('click', function () {
+            const chofer = choferSeleccionadoSelect.value;
+            if (chofer && reservaPendiente) {
+                const eventoStart = reservaPendiente.fecha + 'T' + reservaPendiente.hora + ':00';
+
+                // Agregar el evento al calendario
+                calendar.addEvent({
+                    title: `Reserva Web - ${reservaPendiente.nombre}`,
+                    start: eventoStart,
+                    extendedProps: {
+                        clienteNombre: reservaPendiente.nombre,
+                        clienteTelefono: reservaPendiente.telefono,
+                        clienteCorreo: reservaPendiente.correo,
+                        desde: reservaPendiente.desde,
+                        hasta: reservaPendiente.hasta,
+                        chofer: chofer
+                    },
+                    color: '#17a2b8' // Color distintivo para reservas web
+                });
+
+                // Cierra los modales y elimina la reserva de la lista
+                seleccionarChoferModal.hide();
+                const webReservasModal = bootstrap.Modal.getInstance(document.getElementById('webReservasModal'));
+                if (webReservasModal) {
+                    webReservasModal.hide();
+                }
+
+                // Eliminar la reserva de los datos de ejemplo y recargar la tabla
+                const index = reservasWeb.findIndex(r => r.id === reservaPendiente.id);
+                if (index !== -1) {
+                    reservasWeb.splice(index, 1);
+                }
+                llenarTablaReservasWeb();
+
+                // Limpia la variable de reserva
+                reservaPendiente = null;
+                $('.modal-backdrop').remove();
+                alert('Reserva aceptada y asignada al calendario con éxito.');
+            } else {
+                alert('Debe seleccionar un chofer.');
+            }
+        });
+    });
+</script>
+{% endblock %}
