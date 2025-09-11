@@ -66,6 +66,10 @@
                 <a href="{% url 'calendario' %}" class="{% if 'calendario' in request.path %}active{% endif %} sidebar-link text-decoration-none p-3">
                     <i class="fa-solid fa-calendar-days me-3"></i>
                     <span class="hide-on-collapse">Calendario</span>
+
+                </a><a href="{% url 'vist_Usuarios' %}" class="{% if 'vist_Usuarios' in request.path %}active{% endif %} sidebar-link text-decoration-none p-3">
+                    <i class="fa-solid fa-circle-user me-3"></i>
+                    <span class="hide-on-collapse">Usuarios</span>
                 </a>
             </div>
             <!---->

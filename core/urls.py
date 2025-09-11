@@ -14,7 +14,10 @@ urlpatterns = [
     path('administrador/calendario', views.calendario, name='calendario'),
     path('administrador/choferes', views.choferes, name='choferes'),
     path('administrador/clientes', views.clientes, name='clientes'),
-    path('administrador/form_crearusuarios', views.form_clientes, name='form_clientes'),
+    path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'),
+    path('administrador/form_crear_usuarios', views.form_crear_usuarios, name='form_crear_usuarios'),
+    path('administrador/form_Rol', views.form_Rol, name='form_Rol'),
+    path('administrador/form_clientes', views.form_clientes, name='form_clientes'),
     path('administrador/form_modpro/<id>',views.form_modpro, name='form_modpro'),
     path('administrador/', views.admin_config, name='admin_config'),
 
