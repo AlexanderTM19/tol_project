@@ -15,19 +15,22 @@
 <div class="container" data-aos="fade-up">
     <div class="card">
         <div class="card-header d-flex justify-content-end">
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearClienteModal">
+            <a href="{% url 'form_clientes' %}" class="btn btn-success">
                 <i class="fas fa-plus-circle me-2"></i>Crear cliente
-            </button>
+            </a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table id="clientsTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>RUT</th>
+
                             <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>RUT</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
+                            <th>Cantidad de viajes</th>
                             <th>Recurrente</th>
                             <th>Acciones</th>
                         </tr>
@@ -35,25 +38,31 @@
                     <tbody>
                         {% for cliente in clientes %}
                         <tr>
-                            <td>{{ cliente.rut }}</td>
-                            <td>{{ cliente.nombre }}</td>
-                            <td>{{ cliente.telefono }}</td>
-                            <td>{{ cliente.correo }}</td>
+
+                            <td>{{ cliente.Nombres }}</td>
+                            <td>{{ cliente.Apellidos }}</td>
+                            <td>{{ cliente.Rut }}</td>
+                            <td>{{ cliente.Telefono }}</td>
+                            <td>{{ cliente.Correo }}</td>
+                            <td>{{ cliente.Cantidad_viajes }}</td>
+
                             <td class="text-center">
-                                {% if cliente.recurrente %}
-                                    <i class="fas fa-check-circle text-success fa-2x"></i>
+                                {% if cliente.Recurrente %}
+                                <i class="fas fa-check-circle text-success fa-2x"></i>
                                 {% else %}
-                                    <i class="fas fa-times-circle text-danger fa-2x"></i>
+                                <i class="fas fa-times-circle text-danger fa-2x"></i>
                                 {% endif %}
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-secondary text-white" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#historialModal"
-                                        data-bs-title="Ver historial">
+                                <button class="btn btn-sm btn-secondary text-white" data-bs-toggle="modal"
+                                    data-bs-target="#historialModal" data-bs-title="Ver historial">
                                     <i class="fa-solid fa-book"></i>
                                 </button>
+                                <a href="{% url 'form_modpro' cliente.Rut %}" class="btn btn-sm btn-secondary text-white">
+                                    <i class="bi bi-highlighter"></i>
+                                </a>
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -103,7 +112,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="crearClienteModal" tabindex="-1" aria-labelledby="crearClienteModalLabel" aria-hidden="true">
+<div class="modal fade" id="crearClienteModal" tabindex="-1" aria-labelledby="crearClienteModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -153,7 +163,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         $('#clientsTable').DataTable({
             "language": {
                 "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json"

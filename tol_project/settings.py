@@ -75,12 +75,15 @@ WSGI_APPLICATION = 'tol_project.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.oracle",
+        "NAME": "xe",
+        "USER": "C##ADMIN_LETCO",
+        "PASSWORD": "admin12",
+        "HOST": "localhost",
+        "PORT": "1521",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -111,6 +114,17 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+# Redirecciones de autenticación en Django
+# ----------------------------------------
+# Cuando un usuario inicia sesión correctamente:
+LOGIN_REDIRECT_URL = 'admin_config'       # o 'admin_config' si quieres que vaya directo al panel admin
+
+# Cuando un usuario intenta entrar a una vista protegida sin estar logueado:
+LOGIN_URL = 'login'
+
+# Cuando un usuario cierra sesión:
+LOGOUT_REDIRECT_URL = 'inicio'
 
 
 # Static files (CSS, JavaScript, Images)
