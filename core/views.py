@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import usuarioform
-from .models import Usuarios
+from .form import ClientesForm, UsuariosForm, Rol_Form
+from .models import Clientes, Usuarios, Rol_usuario
 import random
 
 #Funcion de validacion de rut
@@ -114,13 +114,14 @@ def ficha_conductor(request):
         'grilla_conductores': grilla_conductores,
         'total_filas': total_filas
     })
+#-------------------------------------------------------------------------------------------------------------------------------
 
 # ✅ Vistas de administrador (requieren login + superuser)
 @login_required
 @user_passes_test(es_admin)
 def clientes(request):
-    Listado_usuarios = Usuarios.objects.all()
-    return render(request, 'core/clientesAdministrador.html', {"clientes": Listado_usuarios})
+    Listado_clientes = Clientes.objects.all()
+    return render(request, 'core/clientesAdministrador.html', {"clientes": Listado_clientes})
 
 """
      fake = Faker('es_ES')
@@ -144,6 +145,7 @@ def clientes(request):
         'clientes': lista_clientes
     }
 """
+#-------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
 @user_passes_test(es_admin)
@@ -171,6 +173,8 @@ def choferes(request):
     }
     return render(request, 'core/choferesAdministrador.html', context)
 
+#-------------------------------------------------------------------------------------------------------------------------------
+
 @login_required
 @user_passes_test(es_admin)
 def calendario(request):
@@ -192,13 +196,45 @@ def form_clientes(request):
                 mensaje="Datos Guardados Correctamente"
     return render(request, 'core/form_crearusuarios.html',{"form":form,"mensaje":mensaje})
 """
+#-------------------------------------------------------------------------------------------------------------------------------
+
 @login_required
 @user_passes_test(es_admin)
-def form_clientes(request):
-    form = usuarioform()
+def vist_Usuarios(request):
+    Listado_usuarios = Usuarios.objects.all()
+    return render(request, 'core/usuariosAdministrador.html ', {"Usuarios": Listado_usuarios})
+#-------------------------------------------------------------------------------------------------------------------------------
+
+
+@login_required
+@user_passes_test(es_admin)
+def form_Rol(request):
+    form = Rol_Form()
     mensaje = ""
     if request.method == 'POST':
-        form = usuarioform(request.POST)
+        form = Rol_Form(request.POST)
+        if form.is_valid():
+            nombre = form.cleaned_data.get('nombre_Rol')
+            if Rol_usuario.objects.filter(nombre_Rol = nombre ).exists():
+                mensaje = "Este Rol ya está registrado."
+            # 3. Si todo es correcto, guarda el formulario
+            else:
+                form.save()
+                mensaje = "Datos Guardados Correctamente."
+    
+    return render(request, 'core/form_creaRol.html', {"form": form, "mensaje": mensaje})
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+
+
+@login_required
+@user_passes_test(es_admin)
+def form_crear_usuarios(request):
+    form = UsuariosForm()
+    mensaje = ""
+    if request.method == 'POST':
+        form = UsuariosForm(request.POST)
         if form.is_valid():
             rut = form.cleaned_data.get('Rut')
             
@@ -214,21 +250,55 @@ def form_clientes(request):
                 form.save()
                 mensaje = "Datos Guardados Correctamente."
     
-    return render(request, 'core/form_crearusuarios.html', {"form": form, "mensaje": mensaje})
+    return render(request, 'core/form_creaUsuarios.html', {"form": form, "mensaje": mensaje})
+
+#-------------------------------------------------------------------------------------------------------------------------------
+
+
+@login_required
+@user_passes_test(es_admin)
+def form_clientes(request):
+    form = ClientesForm()
+    mensaje = ""
+    if request.method == 'POST':
+        form = ClientesForm(request.POST)
+        if form.is_valid():
+            rut = form.cleaned_data.get('Rut')
+            
+            # ✅ Paso a paso:
+            # 1. Valida el RUT usando la función
+            if not validar_rut(rut):
+                mensaje = "El RUT ingresado no es válido."
+            # 2. Si el RUT es válido, comprueba si ya existe
+            elif Clientes.objects.filter(Rut=rut).exists():
+                mensaje = "Este RUT ya está registrado."
+            # 3. Si todo es correcto, guarda el formulario
+            else:
+                form.save()
+                mensaje = "Datos Guardados Correctamente."
+    
+    return render(request, 'core/form_crearClientes.html', {"form": form, "mensaje": mensaje})
+
+#-------------------------------------------------------------------------------------------------------------------------------
 
 def form_modpro(request, id):
-    Usuario = Usuarios.objects.get(Rut=id)
+    Clientes_existentes = Clientes.objects.get(Rut=id)
     mensaje=""
     if request.method == 'POST':
-        form = usuarioform(request.POST, request.FILES, instance=Usuario)
+        form = ClientesForm(request.POST, request.FILES, instance=Clientes_existentes)
         if form.is_valid():
             form.save()
             mensaje = "Datos Modificado Correctamente"
             return redirect(to="clientes")
     else:
-        return render(request, "core/form_modusuario.html", {"form":usuarioform(instance=Usuario), "mensaje":mensaje})
+        return render(request, "core/form_modusuario.html", {"form":ClientesForm(instance=Clientes_existentes), "mensaje":mensaje})
+
+#-------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
 @user_passes_test(es_admin)
 def admin_config(request):
     return render(request, 'core/reservasAdministrador.html')
+
+
+
