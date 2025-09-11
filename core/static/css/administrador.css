@@ -1,3 +1,28 @@
+
+/*
+Css del login
+*/
+/* En tu archivo CSS (por ejemplo, main.css) */
+
+#login-card {
+    width: 25rem;
+    background-color: rgba(114, 114, 114, 0.5); /* Fondo blanco con 20% de opacidad */
+    backdrop-filter: blur(10px); /* Efecto de desenfoque para que se vea mejor */
+    border: 1px solid rgba(60, 60, 60, 0.8); /* Borde semitransparente */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Opcional: Para una versión con fondo gris */
+/*
+#login-card {
+    width: 25rem;
+    background-color: rgba(60, 60, 60, 0.5); // Fondo gris oscuro con 50% de opacidad
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(60, 60, 60, 0.8);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+*/
+
 :root {
     --sidebar-width: 280px;
     --sidebar-width-collapsed: 80px;

@@ -43,17 +43,51 @@
                 </a>
                 <div class="d-flex align-items-center">
                     <div class="social-links">
-                        <a href="#" class="whatsapp"><i class="bi bi-whatsapp"></i></a>
-                        {% if user.is_authenticated and user.is_superuser %}
-                        <a class="btn" href="{% url 'admin_config' %}">
-                            <i class="bi bi-gear-fill"></i>
-                        </a>
-                        {% endif %}
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a href="#" class="whatsapp"><i class="bi bi-whatsapp"></i></a>
+                            </li>
+                            <li class="nav-item">
+                                {% if user.is_authenticated %}
+                                <p>Hola, <strong>{{ user.username }}</strong></p>
+                                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-light btn-sm">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar sesión
+                                    </button>
+                                </form>
+
+                                {% else %}
+                                <a href="{% url 'login' %}" class="fa-solid fa-left-from-bracket me-2">
+                                    <i class="bi bi-box-arrow-right"></i> Iniciar sesión
+                                </a>
+                                {% endif %}
+                            </li>
+                            <li class="nav-item">
+                                {% if user.is_authenticated and user.is_superuser %}
+                                <a class="btn" href="{% url 'admin_config' %}">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </a>
+                                {% endif %}
+                            </li>
+                            
+                        </ul>
+
+
+
+
+
+
+
+
+
+
+
                     </div>
                 </div>
             </div>
         </div>
-
+        <!--  navbar -->
         <div class="nav-wrap">
             <div class="container d-flex justify-content-center position-relative">
                 <nav id="navmenu" class="navmenu">
@@ -80,7 +114,7 @@
             </div>
         </div>
     </header>
-
+    <!-- BLoque donde muestra lo demas  -->
     <main class="main">
         {% block content %}{% endblock %}
     </main>

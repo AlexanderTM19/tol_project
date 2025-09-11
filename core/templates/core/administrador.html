@@ -68,15 +68,22 @@
                     <span class="hide-on-collapse">Calendario</span>
                 </a>
             </div>
-
+            <!---->
             <div class="profile-section mt-auto p-4">
                 <div class="d-flex align-items-center">
                     <div class="ms-3 profile-info">
-                        <h6 class="text-white mb-0">Alex Morgan</h6>
-                        <small class="text-muted">Admin</small>
+                        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar sesión
+                            </button>
+                        </form>    
                     </div>
                 </div>
             </div>
+
+
+
         </nav>
 
         <main class="main-content">
