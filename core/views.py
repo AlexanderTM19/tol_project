@@ -1,5 +1,7 @@
 # core/views.py
-from django.shortcuts import render,redirect
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
 from .form import usuarioform
@@ -58,6 +60,60 @@ def tarifas(request):
 
 def contacto(request):
     return render(request, 'core/contacto.html')
+
+# Vista personalizada de login con redirección por perfil
+def login_view(request):
+    form = AuthenticationForm(request, data=request.POST or None)
+    error = None
+    if request.method == 'POST':
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                auth_login(request, user)
+                if user.is_superuser:
+                    return redirect('admin_config')  # core/reservasAdministrador.html
+                elif username == 'conductor':
+                    return redirect('ficha_conductor')  # core/fichaConductor.html
+                else:
+                    return redirect('inicio')
+            else:
+                error = "Usuario o contraseña incorrectos"
+        else:
+            error = "Usuario o contraseña incorrectos"
+    return render(request, 'core/login.html', {'form': form, 'error': error})
+
+# Vista para ficha del conductor
+from django.contrib.auth.decorators import login_required
+@login_required
+def ficha_conductor(request):
+    conductores = [44, 34, 29, 24, 33, 36, 25, 16, 31, 10, 27, 2, 7, 43, 21, 1, 37, 4, 12, 18, 15, 32, 5, 3, 13, 41]
+    suspendidos = [26, 22, 6, 11]
+    all_fichas = conductores + suspendidos
+    all_fichas = sorted(set(all_fichas))
+    fake = Faker('es_ES')
+    grilla_conductores = []
+    random.seed(42)
+    for ficha in all_fichas:
+        nombre = fake.first_name()
+        apellido = fake.last_name()
+        servicios = random.randint(1, 200)
+        activo = ficha not in suspendidos
+        grilla_conductores.append({
+            "numero": ficha,
+            "nombre": nombre,
+            "apellido": apellido,
+            "servicios": servicios,
+            "activo": activo
+        })
+    total_filas = len(grilla_conductores)
+    return render(request, 'core/fichaConductor.html', {
+        'conductores': conductores,
+        'suspendidos': suspendidos,
+        'grilla_conductores': grilla_conductores,
+        'total_filas': total_filas
+    })
 
 # ✅ Vistas de administrador (requieren login + superuser)
 @login_required

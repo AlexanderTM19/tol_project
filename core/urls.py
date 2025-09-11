@@ -2,6 +2,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from django.shortcuts import render
 
 urlpatterns = [
     path('', views.index, name='inicio'),
@@ -18,6 +19,10 @@ urlpatterns = [
     path('administrador/', views.admin_config, name='admin_config'),
 
     # Login y Logout
-    path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
+    path('login/', views.login_view, name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='inicio'), name='logout'),
+
+    # Ficha conductor y perfil conductor
+    path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
+    path('perfil-conductor/', lambda request: render(request, 'core/perfilConductor.html'), name='perfil_conductor'),
 ]
