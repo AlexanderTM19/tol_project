@@ -13,9 +13,12 @@ urlpatterns = [
     # Sección administrador (protegida con login)
     path('administrador/calendario', views.calendario, name='calendario'),
     path('administrador/choferes', views.choferes, name='choferes'),
+    path('administrador/form_crearConductor', views.form_crear_conductor, name='form_crear_conductor'),
+    path('administrador/form_crearVehiculo', views.form_crear_vehiculo, name='form_crear_vehiculo'),
     path('administrador/clientes', views.clientes, name='clientes'),
     path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'),
     path('administrador/form_crear_usuarios', views.form_crear_usuarios, name='form_crear_usuarios'),
+    path('administrador/form_modUser/<id>',views.form_mod_usu, name='form_mod_usu'),
     path('administrador/form_Rol', views.form_Rol, name='form_Rol'),
     path('administrador/form_clientes', views.form_clientes, name='form_clientes'),
     path('administrador/form_modpro/<id>',views.form_modpro, name='form_modpro'),
@@ -29,3 +32,4 @@ urlpatterns = [
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
     path('perfil-conductor/', lambda request: render(request, 'core/perfilConductor.html'), name='perfil_conductor'),
 ]
+
