@@ -15,9 +15,9 @@
 <div class="container" data-aos="fade-up">
     <div class="card">
         <div class="card-header d-flex justify-content-end">
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearClienteModal">
-                <i class="fas fa-plus-circle me-2"></i>Crear Chofer
-            </button>
+            <a href="{% url 'form_crear_conductor' %}" class="btn btn-success">
+                <i class="fas fa-plus-circle me-2"></i>Crear Usuarios
+            </a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -38,6 +38,70 @@
                             <td>{{ chofer.nombre }}</td>
                             <td>{{ chofer.telefono }}</td>
                             <td>{{ chofer.correo }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-placement="top" 
+                                        data-bs-title="Ver historial"
+                                        data-bs-target="#historialModal">
+                                    <i class="fa-solid fa-book"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#vehiculoModal"
+                                        data-bs-title="Información vehículo">
+                                    <i class="fa-solid fa-car"></i>
+                                </button>
+                                <button class="btn btn-sm btn-info text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#infoChoferModal"
+                                        data-bs-title="Información chofer">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container section-title mt-4" data-aos="fade-up">
+    <div class="row">
+        <div class="col col-lg-12">
+            <h2>Lista de Vehiculos</h2>
+            <hr>
+        </div>
+    </div>
+</div>
+
+<div class="container" data-aos="fade-up">
+    <div class="card">
+        <div class="card-header d-flex justify-content-end">
+            <a href="{% url 'form_crear_vehiculo' %}" class="btn btn-success">
+                <i class="fas fa-plus-circle me-2"></i>Registrar Vehiculos
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="clientsTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>marca</th>
+                            <th>modelo</th>
+                            <th>año_modelo</th>
+                            <th>Correo</th>
+                            <th>patente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehiculo in vehiculos %}
+                        <tr>
+                            <td>{{ vehiculo.marca }}</td>
+                            <td>{{ vehiculo.modelo }}</td>
+                            <td>{{ vehiculo.año_modelo }}</td>
+                            <td>{{ vehiculo.patente }}</td>     
                             <td>
                                 <button class="btn btn-sm btn-secondary text-white" 
                                         data-bs-toggle="modal" 

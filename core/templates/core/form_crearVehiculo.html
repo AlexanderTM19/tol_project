@@ -1,0 +1,88 @@
+{% extends 'core/administrador.html' %}
+{% load static %}
+
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="container section-title mt-4" data-aos="fade-up">
+    <div class="row">
+        <div class="col col-lg-12">
+            <h2>Registro de Vehiculo
+            </h2>
+            <hr>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="crearClienteModal" tabindex="-1" aria-labelledby="crearClienteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearClienteModalLabel">Registrar nuevo Vehiculo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        {{ form.as_p }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            {% for field in form %}
+            <div class="mb-3 col-md-6">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <hr>
+        <input type="submit" class="btn btn-success" value="Guardar" />
+        <a href="{% url 'choferes' %}" class="btn btn-danger">Volver</a>
+    </form>
+    {% if mensaje != "" %}
+    <div class="alert alert-success">
+        {{mensaje}}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#clientsTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json"
+            },
+            "lengthMenu": [5, 10, 25, 50],
+            "pageLength": 10
+        });
+    });
+</script>
+{% endblock %}

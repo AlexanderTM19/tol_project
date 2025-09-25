@@ -2,10 +2,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
+from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form
-from .models import Clientes, Usuarios, Rol_usuario
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos
 import random
 
 #Funcion de validacion de rut
@@ -62,6 +63,7 @@ def contacto(request):
     return render(request, 'core/contacto.html')
 
 # Vista personalizada de login con redirección por perfil
+"""
 def login_view(request):
     form = AuthenticationForm(request, data=request.POST or None)
     error = None
@@ -72,6 +74,22 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 auth_login(request, user)
+                try:
+                    # Obtener el objeto de usuario de tu modelo personalizado 'Usuarios'
+                    usuario_app = Usuarios.objects.get(Rut=username)
+                    
+                    # Redirigir según el rol del usuario
+                    if usuario_app.Rol.nombre_Rol == 1 or usuario_app.Rol.nombre_Rol == 3:
+                        return redirect('admin_config')
+                    elif usuario_app.Rol.nombre_Rol == 2:
+                        return redirect('ficha_conductor')
+                    else:
+                        # Si el rol no coincide con ninguno, redirige a una página por defecto
+                        return redirect('inicio')
+                        
+                except Usuarios.DoesNotExist:
+                    # En caso de que el usuario exista en auth.User pero no en tu modelo Usuarios
+                    return redirect('inicio')
                 if user.is_superuser:
                     return redirect('admin_config')  # core/reservasAdministrador.html
                 elif username == 'conductor':
@@ -83,6 +101,46 @@ def login_view(request):
         else:
             error = "Usuario o contraseña incorrectos"
     return render(request, 'core/login.html', {'form': form, 'error': error})
+"""
+def login_view(request):
+    error = None
+    # ✅ Usar el formulario personalizado para GET y POST
+    if request.method == 'POST':
+        form = CustomLoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            
+            # Autentica al usuario usando tu backend personalizado
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                # Si las credenciales son válidas, loguea al usuario
+                auth_login(request, user)
+                
+                try:
+                    # ✅ Usa el objeto de usuario autenticado para obtener el Rol
+                    # El 'user' devuelto por authenticate es tu objeto Usuarios
+                    if user.Rol.nombre_Rol == 'Administrador' or user.Rol.nombre_Rol == 'Secretaria':
+                        return redirect('admin_config')
+                    elif user.Rol.nombre_Rol == 'Chofer':
+                        return redirect('ficha_conductor')
+                    else:
+                        return redirect('inicio')
+                        
+                        
+                except AttributeError:
+                    # En caso de que el usuario no tenga un campo 'Rol' definido
+                    return redirect('inicio')
+            else:
+                error = "Usuario o contraseña incorrectos"
+        else:
+            error = "Usuario o contraseña incorrectos"
+    else:
+        # ✅ Para peticiones GET, inicializa el formulario vacío
+        form = CustomLoginForm()
+
+    return render(request, 'core/login.html', {'form': form, 'error': error })
 
 # Vista para ficha del conductor
 from django.contrib.auth.decorators import login_required
@@ -146,7 +204,17 @@ def clientes(request):
     }
 """
 #-------------------------------------------------------------------------------------------------------------------------------
+def choferes(request):
+    lista_choferes = Conductores.objects.all()
+    Lista_vehiculos = Vehiculos.objects.all()
+    contexto = {
+        'choferes': lista_choferes,
+        'vehiculos': Lista_vehiculos,
+    }
 
+    return render(request, 'core/choferesAdministrador.html', contexto)
+
+"""
 @login_required
 @user_passes_test(es_admin)
 def choferes(request):
@@ -172,7 +240,44 @@ def choferes(request):
         'choferes': lista_choferes
     }
     return render(request, 'core/choferesAdministrador.html', context)
+"""
+#-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
+def form_crear_conductor(request):
+    mensaje = ""
+    if request.method == 'POST':
+        form = ChoferForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                form.save()
+                mensaje = "Datos Guardados Correctamente."
+                form = ChoferForm()
+            except IntegrityError:
+                mensaje = "Error: El usuario o algún dato ya está registrado."
+    else:
+        form = ChoferForm()
+    
+    return render(request, 'core/form_crearConductor.html', {"form": form, "mensaje": mensaje})
 
+
+@login_required
+@user_passes_test(es_admin)
+def form_crear_vehiculo(request):
+    mensaje = ""
+    if request.method == 'POST':
+        form = VehiculosForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                form.save()
+                mensaje = "Datos Guardados Correctamente."
+                form = VehiculosForm()
+            except IntegrityError:
+                mensaje = "Error: Esta patente ya está registrada."
+    else:
+        form = VehiculosForm()
+    
+    return render(request, 'core/form_crearVehiculo.html', {"form": form, "mensaje": mensaje})
 #-------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
@@ -251,6 +356,19 @@ def form_crear_usuarios(request):
                 mensaje = "Datos Guardados Correctamente."
     
     return render(request, 'core/form_creaUsuarios.html', {"form": form, "mensaje": mensaje})
+
+#-------------------------------------------------------------------------------------------------------------------------------
+def form_mod_usu(request, id):
+    Usuarios_existentes = Usuarios.objects.get(Rut=id)
+    mensaje=""
+    if request.method == 'POST':
+        form = UsuariosForm(request.POST, request.FILES, instance=Usuarios_existentes)
+        if form.is_valid():
+            form.save()
+            mensaje = "Usuario Modificado Correctamente"
+            return redirect(to="clientes")
+    else:
+        return render(request, "core/form_modUser.html", {"form":UsuariosForm(instance=Usuarios_existentes), "mensaje":mensaje})
 
 #-------------------------------------------------------------------------------------------------------------------------------
 

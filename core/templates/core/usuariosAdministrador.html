@@ -34,6 +34,7 @@
                             <th>Apellidos</th>
                             <th>RUT</th>
                             <th>Correo</th>
+                            <th>Contraseña</th>
                             <th>Rol</th>
                             <th>Acciones</th>
                         </tr>
@@ -46,9 +47,10 @@
                             <td>{{ usuario.Apellidos }}</td>
                             <td>{{ usuario.Rut }}</td>
                             <td>{{ usuario.Correo }}</td>
+                            <td>{{ usuario.ClaveUsuario}}</td>
                             <td>{{ usuario.Rol }}</td>
                             <td>
-                                <a href="{% url 'form_modpro' usuario.Rut %}"
+                                <a href="{% url 'form_mod_usu' usuario.Rut %}"
                                     class="btn btn-sm btn-secondary text-white">
                                     <i class="bi bi-highlighter"></i>
                                 </a>

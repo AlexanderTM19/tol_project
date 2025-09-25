@@ -88,6 +88,13 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
+
+# tol_project/settings.py
+AUTHENTICATION_BACKENDS = [
+    'core.backends.RutAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -136,3 +143,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración de archivos de medios (subidas por el usuario)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
