@@ -16,10 +16,12 @@
 
         <div class="row">
 
+            {% for tarifa in Tarifas %}
+
             <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
+                <div class="faq-item" data-aos="fade-up" data-aos-delay="150">
                     <div class="faq-header">
-                        <h4>Quilicura</h4>
+                        <h4>{{ tarifa.Nombre_Comuna }}</h4>
                         <div class="faq-toggle">
                             <i class="bi bi-plus"></i>
                             <i class="bi bi-dash"></i>
@@ -27,99 +29,52 @@
                     </div>
                     <div class="faq-content">
                         <div class="content-inner">
-                            <p>$50.000.</p>
+                            <p>${{ tarifa.Valor | floatformat:0 }}.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
-                    <div class="faq-header">
-                        <h4>Las Condes</h4>
-                        <div class="faq-toggle">
-                            <i class="bi bi-plus"></i>
-                            <i class="bi bi-dash"></i>
-                        </div>
-                    </div>
-                    <div class="faq-content">
-                        <div class="content-inner">
-                            <p>$60.000.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
-                    <div class="faq-header">
-                        <h4>Estación Central</h4>
-                        <div class="faq-toggle">
-                            <i class="bi bi-plus"></i>
-                            <i class="bi bi-dash"></i>
-                        </div>
-                    </div>
-                    <div class="faq-content">
-                        <div class="content-inner">
-                            <p>$30.000.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
-                    <div class="faq-header">
-                        <h4>Macúl</h4>
-                        <div class="faq-toggle">
-                            <i class="bi bi-plus"></i>
-                            <i class="bi bi-dash"></i>
-                        </div>
-                    </div>
-                    <div class="faq-content">
-                        <div class="content-inner">
-                            <p>$70.000.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
-                    <div class="faq-header">
-                        <h4>Pudahuél</h4>
-                        <div class="faq-toggle">
-                            <i class="bi bi-plus"></i>
-                            <i class="bi bi-dash"></i>
-                        </div>
-                    </div>
-                    <div class="faq-content">
-                        <div class="content-inner">
-                            <p>$45.000.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="150">
-                    <div class="faq-header">
-                        <h4>Puente Alto</h4>
-                        <div class="faq-toggle">
-                            <i class="bi bi-plus"></i>
-                            <i class="bi bi-dash"></i>
-                        </div>
-                    </div>
-                    <div class="faq-content">
-                        <div class="content-inner">
-                            <p>$87.000.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
 
         </div>
 
     </div>
 
 </section>{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Se asegura de que el script corre solo cuando el DOM (HTML) está completamente cargado.
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // Seleccionamos el contenedor principal estático que envuelve a todas las tarifas.
+        // Este elemento está fuera del bucle FOR, por lo que existe desde el inicio.
+        const faqContainer = document.querySelector('.faq.section .container');
+
+        if (faqContainer) {
+            
+            // Usamos delegación de eventos. El escuchador está en el padre estático,
+            // pero reacciona al clic de cualquier elemento dinámico con la clase .faq-header.
+            faqContainer.addEventListener('click', (event) => {
+                
+                // Buscamos si el clic ocurrió dentro de un elemento con la clase .faq-header
+                const header = event.target.closest('.faq-header');
+
+                if (header) {
+                    // Prevenimos cualquier acción predeterminada
+                    event.preventDefault();
+
+                    // Obtenemos el contenedor completo del ítem de la tarifa (el padre .faq-item)
+                    const faqItem = header.closest('.faq-item');
+
+                    if (faqItem) {
+                        // Alternamos la clase 'faq-active'. Esto hará que el CSS muestre u oculte el contenido.
+                        faqItem.classList.toggle('faq-active');
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

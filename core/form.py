@@ -1,6 +1,6 @@
 # En tu archivo core/forms.py
 from django import forms
-from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos
+from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas
 
 #-------------------------------------------------------------------------------------------------------------------------------
 class ClientesForm(forms.ModelForm):
@@ -268,4 +268,23 @@ class VehiculosForm(forms.ModelForm):
                     'class': 'form-control-file'
                 }
             ),
+        }
+        
+#-------------------------------------------------------------------------------------------------------------------------------
+
+class TarifasForm(forms.ModelForm):
+
+    class Meta:
+        model = Tarifas
+        fields = "__all__" 
+        widgets = {
+            'Nombre_Comuna': forms.TextInput(
+                attrs={
+                    'placeholder': 'Ej: Aeropuerto Internacional, Santiago Centro',
+                    'class': 'form-control',
+            }),
+            'Valor': forms.NumberInput(attrs={
+                    'placeholder': 'Ej: 15000',
+                    'class': 'form-control'
+            }),
         }

@@ -5,8 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm
-from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm,TarifasForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas
 import random
 
 #Funcion de validacion de rut
@@ -57,7 +57,8 @@ def reservas(request):
     return render(request, 'core/reservas.html')
 
 def tarifas(request):
-    return render(request, 'core/tarifas.html')
+    tarifas_lista = Tarifas.objects.all()
+    return render(request, 'core/tarifas.html', {"Tarifas": tarifas_lista})
 
 def contacto(request):
     return render(request, 'core/contacto.html')
@@ -305,9 +306,64 @@ def form_clientes(request):
 
 @login_required
 @user_passes_test(es_admin)
+
+def vista_tarifas_admin(request):
+    mensaje = None
+    
+    # Manejar la creación de una nueva tarifa (cuando se envía el formulario del modal)
+    if request.method == 'POST':
+        form = TarifasForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                mensaje = "Tarifa guardada correctamente."
+                # Después de guardar, redirigir o crear un nuevo formulario vacío
+                form = TarifasForm() 
+            except IntegrityError:
+                mensaje = "Error: La comuna ya tiene una tarifa registrada."
+                
+        else:
+            mensaje = "Error al validar los datos de la tarifa."
+            # Si el formulario no es válido, se mantiene para mostrar los errores en el modal
+            
+    else:
+        # Si es una petición GET, crea un formulario vacío
+        form = TarifasForm()
+    
+    # Obtener todas las tarifas para mostrar la tabla
+    tarifas_lista = Tarifas.objects.all()
+
+    contexto = {
+        'Tarifas': tarifas_lista,
+        'form': form,
+        'mensaje': mensaje,
+    }
+    
+    return render(request, 'core/tarifasAdministrador.html', contexto)
+
+#-------------------------------------------------------------------------------------------------------------------------------
+def form_mod_tarifa(request, id):
+    Tarifas_existentes = Tarifas.objects.get(id_tarifa=id)
+    mensaje=""
+    if request.method == 'POST':
+        form = TarifasForm(request.POST, instance=Tarifas_existentes)
+        if form.is_valid():
+            form.save()
+            mensaje = "Tarifa Modificada Correctamente"
+            return redirect(to="vista_tarifas_admin")
+    else:
+        return render(request, "core/form_mod_tarifa.html", {"form":TarifasForm(instance=Tarifas_existentes), "mensaje":mensaje})
+
+#-------------------------------------------------------------------------------------------------------------------------------
+
+
+
+@login_required
+@user_passes_test(es_admin)
 def vist_Usuarios(request):
     Listado_usuarios = Usuarios.objects.all()
     return render(request, 'core/usuariosAdministrador.html ', {"Usuarios": Listado_usuarios})
+
 #-------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -366,13 +422,13 @@ def form_mod_usu(request, id):
         if form.is_valid():
             form.save()
             mensaje = "Usuario Modificado Correctamente"
-            return redirect(to="clientes")
+            return redirect(to="vist_Usuarios")
     else:
         return render(request, "core/form_modUser.html", {"form":UsuariosForm(instance=Usuarios_existentes), "mensaje":mensaje})
 
 #-------------------------------------------------------------------------------------------------------------------------------
 
-
+#Esta es la vista de creacion del cliente 
 @login_required
 @user_passes_test(es_admin)
 def form_clientes(request):
@@ -398,7 +454,7 @@ def form_clientes(request):
     return render(request, 'core/form_crearClientes.html', {"form": form, "mensaje": mensaje})
 
 #-------------------------------------------------------------------------------------------------------------------------------
-
+#esta es la vista de modificacion de el clliente
 def form_modpro(request, id):
     Clientes_existentes = Clientes.objects.get(Rut=id)
     mensaje=""
@@ -412,7 +468,7 @@ def form_modpro(request, id):
         return render(request, "core/form_modusuario.html", {"form":ClientesForm(instance=Clientes_existentes), "mensaje":mensaje})
 
 #-------------------------------------------------------------------------------------------------------------------------------
-
+#Vista del administrador
 @login_required
 @user_passes_test(es_admin)
 def admin_config(request):
