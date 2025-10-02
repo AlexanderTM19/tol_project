@@ -5,12 +5,12 @@
 {% block extra_css %}
 <style>
 	.profile-card {
-		max-width: 700px;
-		margin: 2.5rem auto;
+		max-width: 760px;
+		margin: 3rem auto;
 		background: #fff;
 		border-radius: 2rem;
 		box-shadow: 0 8px 36px rgba(0,0,0,0.13), 0 2px 10px rgba(0,0,0,0.07);
-		padding: 3.5rem 2.5rem 2.5rem 2.5rem;
+		padding: 3.5rem 3rem 3rem 3rem;
 		text-align: center;
 		position: relative;
 	}
@@ -38,36 +38,40 @@
 		letter-spacing: 0.2px;
 	}
 	.profile-info {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 1.1rem;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+		gap: 1.5rem 2rem;
 		text-align: left;
-		margin: 0 auto 1.2rem auto;
-		max-width: 400px;
+		margin: 0 auto 1.5rem auto;
+		max-width: 540px;
 		background: #f7faff;
-		padding: 1.5rem 2rem;
-		border-radius: 1rem;
-		box-shadow: 0 2px 8px rgba(42,82,152,0.06);
+		padding: 2rem 2.5rem;
+		border-radius: 1.2rem;
+		box-shadow: 0 6px 18px rgba(42,82,152,0.08);
+	}
+	.profile-info .info-row {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		gap: 0.6rem;
 	}
 	.profile-info .info-label {
 		color: #1e3c72;
 		font-weight: 700;
-		font-size: 1.08rem;
-		width: 140px;
-		display: inline-block;
-		vertical-align: top;
+		font-size: 1.05rem;
 		letter-spacing: 0.2px;
+		white-space: nowrap;
 	}
 	.profile-info .info-value {
 		color: #2a5298;
 		font-weight: 500;
-		font-size: 1.08rem;
-		margin-left: 0.5rem;
+		font-size: 1.05rem;
+		line-height: 1.4;
 	}
 	@media (max-width: 600px) {
-		.profile-card { padding: 1.2rem 0.5rem; }
-		.profile-info { max-width: 100%; padding: 1rem 0.5rem; }
+		.profile-card { padding: 2.5rem 1.4rem; }
+		.profile-info { max-width: 100%; padding: 1.4rem 1.1rem; gap: 1rem; }
+		.profile-info .info-row { grid-template-columns: 1fr; gap: 0.3rem; }
 		.profile-info .info-label, .profile-info .info-value { font-size: 1rem; }
 	}
 </style>
@@ -76,14 +80,22 @@
 {% block content %}
 <div class="profile-card fade-in">
 	<img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Foto de perfil" class="profile-avatar">
-	<div class="profile-name">Felipe Aravena</div>
+	<div class="profile-name">{{ conductor.usuario.Nombres }} {{ conductor.usuario.Apellidos }}</div>
 	<div class="profile-role">Conductor Oficial</div>
 	<div class="profile-info">
-		<div><span class="info-label"><i class="bi bi-envelope-at"></i> Correo:</span><span class="info-value">felipe.aravena@email.com</span></div>
-		<div><span class="info-label"><i class="bi bi-telephone"></i> Contacto:</span><span class="info-value">+56 9 1234 5678</span></div>
-		<div><span class="info-label"><i class="bi bi-person-badge"></i> N° Ficha:</span><span class="info-value">41</span></div>
-		<div><span class="info-label"><i class="bi bi-calendar-check"></i> Servicios:</span><span class="info-value">25</span></div>
-		<div><span class="info-label"><i class="bi bi-geo-alt"></i> Dirección:</span><span class="info-value">Santiago, Chile</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-envelope-at"></i> Correo:</span><span class="info-value">{{ conductor.usuario.Correo }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-telephone"></i> Contacto:</span><span class="info-value">{{ conductor.Telefono }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-person-badge"></i> N° Ficha:</span><span class="info-value">41</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-person-badge"></i> Rut:</span><span class="info-value">{{ conductor.usuario.Rut }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-calendar-check"></i> Servicios:</span><span class="info-value">{{ conductor.total_viajes_realizados }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-geo-alt"></i> Dirección:</span><span class="info-value">{{ conductor.Direccion }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-car-front"></i> Vehiculo:</span><span class="info-value">
+			{% if vehiculo %}
+			{{ vehiculo.marca }} {{ vehiculo.modelo }} - {{ vehiculo.patente }}
+			{% else %}
+			Sin asignar
+			{% endif %}
+		</span></div>
 	</div>
 </div>
 {% endblock %}

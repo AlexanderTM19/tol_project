@@ -147,6 +147,11 @@ def login_view(request):
 from django.contrib.auth.decorators import login_required
 @login_required
 def ficha_conductor(request):
+    try:
+        conductor = Conductores.objects.select_related('usuario', 'vehiculo').get(usuario=request.user)
+    except Conductores.DoesNotExist:
+        conductor = None
+
     conductores = [44, 34, 29, 24, 33, 36, 25, 16, 31, 10, 27, 2, 7, 43, 21, 1, 37, 4, 12, 18, 15, 32, 5, 3, 13, 41]
     suspendidos = [26, 22, 6, 11]
     all_fichas = conductores + suspendidos
@@ -171,8 +176,24 @@ def ficha_conductor(request):
         'conductores': conductores,
         'suspendidos': suspendidos,
         'grilla_conductores': grilla_conductores,
-        'total_filas': total_filas
+        'total_filas': total_filas,
+        'conductor': conductor,
+        'vehiculo': conductor.vehiculo if conductor else None,
     })
+
+
+@login_required
+def perfil_conductor_view(request):
+    try:
+        conductor = Conductores.objects.select_related('usuario', 'vehiculo').get(usuario=request.user)
+    except Conductores.DoesNotExist:
+        return redirect('inicio')
+
+    contexto = {
+        'conductor': conductor,
+        'vehiculo': conductor.vehiculo,
+    }
+    return render(request, 'core/perfilConductor.html', contexto)
 #-------------------------------------------------------------------------------------------------------------------------------
 
 # ✅ Vistas de administrador (requieren login + superuser)
@@ -206,11 +227,52 @@ def clientes(request):
 """
 #-------------------------------------------------------------------------------------------------------------------------------
 def choferes(request):
-    lista_choferes = Conductores.objects.all()
+    mensaje_vehiculo = ""
+    mensaje_chofer = ""
+    vehiculo_form = VehiculosForm()
+    chofer_form = ChoferForm()
+    chofer_form.fields['vehiculo'].required = True
+
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'vehiculo':
+            vehiculo_form = VehiculosForm(request.POST, request.FILES)
+            if vehiculo_form.is_valid():
+                try:
+                    vehiculo_form.save()
+                    mensaje_vehiculo = "Vehiculo registrado correctamente."
+                    vehiculo_form = VehiculosForm()
+                except IntegrityError:
+                    vehiculo_form.add_error('patente', "Esta patente ya está registrada.")
+                    mensaje_vehiculo = "No se pudo registrar el vehiculo. Revisa la patente ingresada."
+            else:
+                mensaje_vehiculo = "Corrige los datos marcados e inténtalo nuevamente."
+
+        elif form_type == 'chofer':
+            chofer_form = ChoferForm(request.POST, request.FILES)
+            chofer_form.fields['vehiculo'].required = True
+            if chofer_form.is_valid():
+                try:
+                    chofer_form.save()
+                    mensaje_chofer = "Chofer registrado correctamente."
+                    chofer_form = ChoferForm()
+                    chofer_form.fields['vehiculo'].required = True
+                except IntegrityError:
+                    chofer_form.add_error('usuario', "Este usuario ya está registrado como chofer.")
+                    mensaje_chofer = "No se pudo registrar el chofer. Revisa la información ingresada."
+            else:
+                mensaje_chofer = "Corrige los datos marcados e inténtalo nuevamente."
+
+    lista_choferes = Conductores.objects.select_related('usuario', 'vehiculo').all()
     Lista_vehiculos = Vehiculos.objects.all()
     contexto = {
         'choferes': lista_choferes,
         'vehiculos': Lista_vehiculos,
+        'vehiculo_form': vehiculo_form,
+        'mensaje_vehiculo': mensaje_vehiculo,
+        'chofer_form': chofer_form,
+        'mensaje_chofer': mensaje_chofer,
     }
 
     return render(request, 'core/choferesAdministrador.html', contexto)
