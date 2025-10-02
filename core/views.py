@@ -315,7 +315,11 @@ def form_crear_vehiculo(request):
 @login_required
 @user_passes_test(es_admin)
 def calendario(request):
-    return render(request, 'core/calendarioAdministrador.html')
+    eventos = _construir_eventos_reservas()
+    contexto = {
+        'reservas_json': json.dumps(eventos, ensure_ascii=False),
+    }
+    return render(request, 'core/calendarioAdministrador.html', contexto)
 
 #-------------------------------------------------------------------------------------------------------------------------------
 
@@ -483,6 +487,34 @@ def form_modpro(request, id):
 
 #-------------------------------------------------------------------------------------------------------------------------------
 #Vista del administrador
+def _construir_eventos_reservas():
+    reservas = Reservas.objects.select_related('Origen', 'Destino', 'Chofer_asignado__usuario').all()
+    eventos = []
+    for reserva in reservas:
+        inicio = datetime.combine(reserva.Fecha, reserva.Hora)
+        nombre_cliente = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip()
+        chofer_asignado = None
+        if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
+            chofer_usuario = reserva.Chofer_asignado.usuario
+            chofer_asignado = f"{chofer_usuario.Nombres} {chofer_usuario.Apellidos}".strip()
+
+        eventos.append({
+            'id': str(reserva.Id_reserva),
+            'title': f"Reserva - {nombre_cliente}".strip(),
+            'start': inicio.isoformat(),
+            'extendedProps': {
+                'clienteNombre': nombre_cliente,
+                'clienteTelefono': reserva.Telefono,
+                'clienteCorreo': reserva.Correo or '',
+                'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
+                'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
+                'chofer': chofer_asignado or 'Sin asignar',
+            }
+        })
+
+    return eventos
+
+
 @login_required
 @user_passes_test(es_admin)
 def admin_config(request):
@@ -520,29 +552,7 @@ def admin_config(request):
         # En una solicitud GET, inicializa un formulario vacío
         form = ReservasForm()
 
-    reservas = Reservas.objects.select_related('Origen', 'Destino', 'Chofer_asignado__usuario').all()
-    eventos = []
-    for reserva in reservas:
-        inicio = datetime.combine(reserva.Fecha, reserva.Hora)
-        nombre_cliente = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip()
-        chofer_asignado = None
-        if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
-            chofer_usuario = reserva.Chofer_asignado.usuario
-            chofer_asignado = f"{chofer_usuario.Nombres} {chofer_usuario.Apellidos}".strip()
-
-        eventos.append({
-            'id': str(reserva.Id_reserva),
-            'title': f"Reserva - {nombre_cliente}".strip(),
-            'start': inicio.isoformat(),
-            'extendedProps': {
-                'clienteNombre': nombre_cliente,
-                'clienteTelefono': reserva.Telefono,
-                'clienteCorreo': reserva.Correo or '',
-                'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
-                'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
-                'chofer': chofer_asignado or 'Sin asignar',
-            }
-        })
+    eventos = _construir_eventos_reservas()
 
     contexto = {
         'form_reserva': form, 
