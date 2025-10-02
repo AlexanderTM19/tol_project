@@ -214,6 +214,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        var reservasIniciales = JSON.parse('{{ reservas_json|escapejs }}');
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -227,60 +228,7 @@
             editable: true,
             selectable: true,
             dayMaxEvents: true,
-            events: [
-                {
-                    title: 'Reserva 1',
-                    start: '2025-08-20T10:30:00',
-                    extendedProps: {
-                        clienteNombre: 'Juan Pérez',
-                        clienteTelefono: '+56 9 1234 5678',
-                        clienteCorreo: 'juan.perez@example.com',
-                        desde: 'Quilicura',
-                        hasta: 'Aeropuerto SCL',
-                        chofer: 'Juan Pérez'
-                    },
-                    color: '#28a745'
-                },
-                {
-                    title: 'Reserva 2',
-                    start: '2025-08-22T14:00:00',
-                    extendedProps: {
-                        clienteNombre: 'María Gómez',
-                        clienteTelefono: '+56 9 8765 4321',
-                        clienteCorreo: 'maria.gomez@example.com',
-                        desde: 'Providencia',
-                        hasta: 'Centro de Santiago',
-                        chofer: 'Ana Torres'
-                    },
-                    color: '#007bff'
-                },
-                {
-                    title: 'Mantención de Vehículo',
-                    start: '2025-08-28T09:00:00',
-                    extendedProps: {
-                        clienteNombre: 'N/A',
-                        clienteTelefono: 'N/A',
-                        clienteCorreo: 'N/A',
-                        desde: 'N/A',
-                        hasta: 'Taller Mecánico',
-                        chofer: 'Carlos Rojas'
-                    },
-                    color: '#dc3545'
-                },
-                {
-                    title: 'Reserva 3',
-                    start: '2025-09-05T10:00:00',
-                    extendedProps: {
-                        clienteNombre: 'Ana Torres',
-                        clienteTelefono: '+56 9 1111 2222',
-                        clienteCorreo: 'ana.torres@example.com',
-                        desde: 'Las Condes',
-                        hasta: 'Aeropuerto SCL',
-                        chofer: 'Juan Pérez'
-                    },
-                    color: '#6c757d'
-                }
-            ],
+            events: reservasIniciales,
             // Se elimina la función dateClick para que solo se pueda crear reservas con el botón
             eventClick: function (info) {
                 var event = info.event;
