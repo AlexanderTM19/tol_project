@@ -5,12 +5,20 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm,TarifasForm
-from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm,TarifasForm,ReservasForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas
 import random
+import json
+from django.http import JsonResponse
+from django.utils.dateformat import DateFormat 
+
+# ❌ FUNCIÓN events_json ELIMINADA para revertir la funcionalidad AJAX del calendario.
+# def events_json(request):
+#     # ... código eliminado ...
+#     pass
+
 
 #Funcion de validacion de rut
-
 def validar_rut(rut):
     """
     Valida un RUT chileno (con o sin puntos/guión)
@@ -64,45 +72,6 @@ def contacto(request):
     return render(request, 'core/contacto.html')
 
 # Vista personalizada de login con redirección por perfil
-"""
-def login_view(request):
-    form = AuthenticationForm(request, data=request.POST or None)
-    error = None
-    if request.method == 'POST':
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                auth_login(request, user)
-                try:
-                    # Obtener el objeto de usuario de tu modelo personalizado 'Usuarios'
-                    usuario_app = Usuarios.objects.get(Rut=username)
-                    
-                    # Redirigir según el rol del usuario
-                    if usuario_app.Rol.nombre_Rol == 1 or usuario_app.Rol.nombre_Rol == 3:
-                        return redirect('admin_config')
-                    elif usuario_app.Rol.nombre_Rol == 2:
-                        return redirect('ficha_conductor')
-                    else:
-                        # Si el rol no coincide con ninguno, redirige a una página por defecto
-                        return redirect('inicio')
-                        
-                except Usuarios.DoesNotExist:
-                    # En caso de que el usuario exista en auth.User pero no en tu modelo Usuarios
-                    return redirect('inicio')
-                if user.is_superuser:
-                    return redirect('admin_config')  # core/reservasAdministrador.html
-                elif username == 'conductor':
-                    return redirect('ficha_conductor')  # core/fichaConductor.html
-                else:
-                    return redirect('inicio')
-            else:
-                error = "Usuario o contraseña incorrectos"
-        else:
-            error = "Usuario o contraseña incorrectos"
-    return render(request, 'core/login.html', {'form': form, 'error': error})
-"""
 def login_view(request):
     error = None
     # ✅ Usar el formulario personalizado para GET y POST
@@ -182,28 +151,6 @@ def clientes(request):
     Listado_clientes = Clientes.objects.all()
     return render(request, 'core/clientesAdministrador.html', {"clientes": Listado_clientes})
 
-"""
-     fake = Faker('es_ES')
-    lista_clientes = []
-    
-    for _ in range(100):
-        cliente = {
-            'rut': fake.unique.random_number(digits=8, fix_len=True),
-            'nombre': fake.name(),
-            'telefono': fake.phone_number(),
-            'correo': fake.email(),
-            'recurrente': random.choice([True, False]),
-        }
-        rut = str(cliente['rut'])
-        rut_formateado = f"{rut[:-7]}.{rut[-7:-4]}.{rut[-4:-1]}-{rut[-1]}"
-        cliente['rut'] = rut_formateado
-        
-        lista_clientes.append(cliente)
-
-    context = {
-        'clientes': lista_clientes
-    }
-"""
 #-------------------------------------------------------------------------------------------------------------------------------
 def choferes(request):
     lista_choferes = Conductores.objects.all()
@@ -215,33 +162,6 @@ def choferes(request):
 
     return render(request, 'core/choferesAdministrador.html', contexto)
 
-"""
-@login_required
-@user_passes_test(es_admin)
-def choferes(request):
-    fake = Faker('es_ES')  
-    lista_choferes = []
-    
-    for _ in range(3):
-        chofer = {
-            'rut': fake.unique.random_number(digits=8, fix_len=True),
-            'nombre': fake.name(),
-            'telefono': fake.phone_number(),
-            'correo': fake.email(),
-            'pais': fake.country(),
-            'direccion': fake.address(),
-        }
-        rut = str(chofer['rut'])
-        rut_formateado = f"{rut[:-7]}.{rut[-7:-4]}.{rut[-4:-1]}-{rut[-1]}"
-        chofer['rut'] = rut_formateado
-        
-        lista_choferes.append(chofer)
-
-    context = {
-        'choferes': lista_choferes
-    }
-    return render(request, 'core/choferesAdministrador.html', context)
-"""
 #-------------------------------------------------------------------------------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
@@ -285,23 +205,7 @@ def form_crear_vehiculo(request):
 @user_passes_test(es_admin)
 def calendario(request):
     return render(request, 'core/calendarioAdministrador.html')
-"""
-@login_required
-@user_passes_test(es_admin)
-def form_clientes(request):
-    form = usuarioform()
-    mensaje =""
-    if request.method == 'POST':
-        form = usuarioform(request.POST, request.FILES)
-        if form.is_valid():
-            rut = request.POST.get('rut', None)
-            if rut in rut.objects.values_list('rut', flat=True):
-                mensaje="Este rut ya está registrado"
-            else:
-                form.save()
-                mensaje="Datos Guardados Correctamente"
-    return render(request, 'core/form_crearusuarios.html',{"form":form,"mensaje":mensaje})
-"""
+
 #-------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
@@ -355,7 +259,6 @@ def form_mod_tarifa(request, id):
         return render(request, "core/form_mod_tarifa.html", {"form":TarifasForm(instance=Tarifas_existentes), "mensaje":mensaje})
 
 #-------------------------------------------------------------------------------------------------------------------------------
-
 
 
 @login_required
@@ -472,7 +375,43 @@ def form_modpro(request, id):
 @login_required
 @user_passes_test(es_admin)
 def admin_config(request):
-    return render(request, 'core/reservasAdministrador.html')
+    mensaje = None
+    
+    # ----------------------------------------------------------------------
+    # 1. LÓGICA POST (Cuando se envía el formulario del modal) - SIN AJAX
+    # ----------------------------------------------------------------------
+    if request.method == 'POST':
+        
+        # Instancia el formulario con los datos enviados por el usuario
+        form = ReservasForm(request.POST)
+        
+        if form.is_valid():
+            # El formulario es válido, guardar la reserva
+            reserva_nueva = form.save(commit=False)
+            
+            # NOTA: Aquí puedes asignar campos que no están en el formulario (si es necesario)
+            # reserva_nueva.Confirmacion = True # Ejemplo
+            
+            reserva_nueva.save()
+            
+            # Comportamiento POST/Redirect/Get (para envíos tradicionales)
+            return redirect('admin_config') 
 
+        else:
+            # Si el formulario NO es válido
+            mensaje = "Error al guardar la reserva. Revise los campos."
+            # El formulario con errores se pasa al contexto.
+            
+    # ----------------------------------------------------------------------
+    # 2. LÓGICA GET (Cuando se carga la página por primera vez o después de un POST exitoso)
+    # ----------------------------------------------------------------------
+    else:
+        # En una solicitud GET, inicializa un formulario vacío
+        form = ReservasForm()
 
-
+    contexto = {
+        'form_reserva': form, 
+        'mensaje': mensaje, 
+    }
+    
+    return render(request, 'core/reservasAdministrador.html', contexto)

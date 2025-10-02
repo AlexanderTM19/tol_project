@@ -28,7 +28,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="crearEventoModal" tabindex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -36,59 +35,100 @@
                 <h5 class="modal-title" id="crearEventoModalLabel">Crear nueva reserva</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="formCrearEvento">
+            <form id="formCrearEvento" method="post" action="{% url 'admin_config' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="{{ form_reserva.Nombre_Cliente.id_for_label }}" class="form-label">Nombre del
+                            Cliente</label>
+                        {{ form_reserva.Nombre_Cliente }}
+                        {{ form_reserva.Nombre_Cliente.errors }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form_reserva.Apellidos_Cliente.id_for_label }}" class="form-label">Apellidos del
+                            Cliente</label>
+                        {{ form_reserva.Apellidos_Cliente }}
+                        {{ form_reserva.Apellidos_Cliente.errors }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form_reserva.Telefono.id_for_label }}" class="form-label">Teléfono</label>
+                        {{ form_reserva.Telefono }}
+                        {{ form_reserva.Telefono.errors }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form_reserva.Correo.id_for_label }}" class="form-label">Correo (Opcional)</label>
+                        {{ form_reserva.Correo }}
+                        {{ form_reserva.Correo.errors }}
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="eventoFechaInicio" class="form-label">Fecha de inicio</label>
-                            <input type="date" class="form-control" id="eventoFechaInicio" required>
+                            <label for="{{ form_reserva.Origen.id_for_label }}" class="form-label">Origen</label>
+                            {{ form_reserva.Origen }}
+                            {{ form_reserva.Origen.errors }}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="eventoHoraInicio" class="form-label">Hora de inicio</label>
-                            <input type="time" class="form-control" id="eventoHoraInicio" required>
+                            <label for="{{ form_reserva.Destino.id_for_label }}" class="form-label">Destino</label>
+                            {{ form_reserva.Destino }}
+                            {{ form_reserva.Destino.errors }}
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="eventoClienteNombre" class="form-label">Nombre del Cliente</label>
-                        <input type="text" class="form-control" id="eventoClienteNombre" required>
+                        <label for="{{ form_reserva.Dirrecion.id_for_label }}" class="form-label">Dirrecion del
+                            Cliente</label>
+                        {{ form_reserva.Dirrecion }}
+                        {{ form_reserva.Dirrecion.errors }}
                     </div>
-                    <div class="mb-3">
-                        <label for="eventoClienteTelefono" class="form-label">Teléfono del Cliente</label>
-                        <input type="text" class="form-control" id="eventoClienteTelefono">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventoClienteCorreo" class="form-label">Correo del Cliente</label>
-                        <input type="email" class="form-control" id="eventoClienteCorreo">
-                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="eventoDesde" class="form-label">Desde</label>
-                            <input type="text" class="form-control" id="eventoDesde" required>
+                            <label for="{{ form_reserva.Fecha.id_for_label }}" class="form-label">Fecha de Viaje</label>
+                            {{ form_reserva.Fecha }}
+                            {{ form_reserva.Fecha.errors }}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="eventoHasta" class="form-label">Hasta</label>
-                            <input type="text" class="form-control" id="eventoHasta" required>
+                            <label for="{{ form_reserva.Hora.id_for_label }}" class="form-label">Hora de Viaje</label>
+                            {{ form_reserva.Hora }}
+                            {{ form_reserva.Hora.errors }}
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="eventoChofer" class="form-label">Chofer Designado</label>
-                        <select class="form-select" id="eventoChofer" required>
-                            <option value="" selected disabled>Seleccione un chofer</option>
-                            <option value="Juan Pérez">Juan Pérez</option>
-                            <option value="Ana Torres">Ana Torres</option>
-                            <option value="Carlos Rojas">Carlos Rojas</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form_reserva.Cantidad_pasajeros.id_for_label }}"
+                                class="form-label">Pasajeros</label>
+                            {{ form_reserva.Cantidad_pasajeros }}
+                            {{ form_reserva.Cantidad_pasajeros.errors }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form_reserva.Cantidad_maletas.id_for_label }}"
+                                class="form-label">Maletas</label>
+                            {{ form_reserva.Cantidad_maletas }}
+                            {{ form_reserva.Cantidad_maletas.errors }}
+                        </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success" id="guardarEventoBtn">Guardar</button>
-            </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form_reserva.Chofer_asignado.id_for_label }}" class="form-label">Chofer Asignado
+                            (Opcional)</label>
+                        {{ form_reserva.Chofer_asignado }}
+                        {{ form_reserva.Chofer_asignado.errors }}
+                    </div>
+
+                    {% if form_reserva.non_field_errors %}
+                    <div class="alert alert-danger">{{ form_reserva.non_field_errors }}</div>
+                    {% endif %}
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="guardarReservaBtn">Guardar</button>
+                </div>
+            </form>
+
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="infoReservaModal" tabindex="-1" aria-labelledby="infoReservaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -177,6 +217,7 @@
         </div>
     </div>
 </div>
+
 <div class="modal fade" id="seleccionarChoferModal" tabindex="-1" aria-labelledby="seleccionarChoferModalLabel"
     aria-hidden="true">
     <div class="modal-dialog">
@@ -210,6 +251,7 @@
     .fc-event {
         cursor: pointer;
     }
+
     .modal-full-width {
         max-width: 80%;
         width: 80%;
@@ -236,61 +278,11 @@
             editable: true,
             selectable: true,
             dayMaxEvents: true,
-            events: [
-                {
-                    title: 'Reserva 1',
-                    start: '2025-08-20T10:30:00',
-                    extendedProps: {
-                        clienteNombre: 'Juan Pérez',
-                        clienteTelefono: '+56 9 1234 5678',
-                        clienteCorreo: 'juan.perez@example.com',
-                        desde: 'Quilicura',
-                        hasta: 'Aeropuerto SCL',
-                        chofer: 'Juan Pérez'
-                    },
-                    color: '#28a745'
-                },
-                {
-                    title: 'Reserva 2',
-                    start: '2025-08-22T14:00:00',
-                    extendedProps: {
-                        clienteNombre: 'María Gómez',
-                        clienteTelefono: '+56 9 8765 4321',
-                        clienteCorreo: 'maria.gomez@example.com',
-                        desde: 'Providencia',
-                        hasta: 'Centro de Santiago',
-                        chofer: 'Ana Torres'
-                    },
-                    color: '#007bff'
-                },
-                {
-                    title: 'Mantención de Vehículo',
-                    start: '2025-08-28T09:00:00',
-                    extendedProps: {
-                        clienteNombre: 'N/A',
-                        clienteTelefono: 'N/A',
-                        clienteCorreo: 'N/A',
-                        desde: 'N/A',
-                        hasta: 'Taller Mecánico',
-                        chofer: 'Carlos Rojas'
-                    },
-                    color: '#dc3545'
-                },
-                {
-                    title: 'Reserva 3',
-                    start: '2025-09-05T10:00:00',
-                    extendedProps: {
-                        clienteNombre: 'Ana Torres',
-                        clienteTelefono: '+56 9 1111 2222',
-                        clienteCorreo: 'ana.torres@example.com',
-                        desde: 'Las Condes',
-                        hasta: 'Aeropuerto SCL',
-                        chofer: 'Juan Pérez'
-                    },
-                    color: '#6c757d'
-                }
-            ],
-            // Se elimina la función dateClick para que solo se pueda crear reservas con el botón
+            // ❌ ELIMINADA ESTA LÍNEA QUE CAUSABA EL ERROR:
+            // Si quieres cargar reservas estáticas o precargadas al inicio,
+            // lo harías aquí con un array de eventos o cargando la lista completa
+            // desde el contexto de Django.
+            
             eventClick: function (info) {
                 var event = info.event;
                 var modal = new bootstrap.Modal(document.getElementById('infoReservaModal'));
@@ -314,47 +306,59 @@
 
         calendar.render();
 
-        document.getElementById('guardarEventoBtn').addEventListener('click', function () {
-            var clienteNombre = document.getElementById('eventoClienteNombre').value;
-            var clienteTelefono = document.getElementById('eventoClienteTelefono').value;
-            var clienteCorreo = document.getElementById('eventoClienteCorreo').value;
-            var desde = document.getElementById('eventoDesde').value;
-            var hasta = document.getElementById('eventoHasta').value;
-            var chofer = document.getElementById('eventoChofer').value;
-            var fechaInicio = document.getElementById('eventoFechaInicio').value;
-            var horaInicio = document.getElementById('eventoHoraInicio').value;
+        // =========================================================================
+        // LÓGICA DE ENVÍO DEL FORMULARIO DE RESERVA MANUAL
+        // =========================================================================
 
-            if (clienteNombre && desde && hasta && chofer && fechaInicio && horaInicio) {
-                var eventoStart = fechaInicio + 'T' + horaInicio + ':00';
+        const formCrearEvento = document.getElementById('formCrearEvento');
+        // Obtener la instancia del modal para poder cerrarlo después del envío
+        const crearEventoModalEl = document.getElementById('crearEventoModal');
+        const crearEventoModal = new bootstrap.Modal(crearEventoModalEl);
 
-                calendar.addEvent({
-                    title: 'Reserva - ' + clienteNombre,
-                    start: eventoStart,
-                    extendedProps: {
-                        clienteNombre: clienteNombre,
-                        clienteTelefono: clienteTelefono,
-                        clienteCorreo: clienteCorreo,
-                        desde: desde,
-                        hasta: hasta,
-                        chofer: chofer
-                    },
-                    color: '#ffc107'
-                });
 
-                // 💡 Cambio clave para asegurar que el modal se cierre correctamente
-                var modalElement = document.getElementById('crearEventoModal');
-                var modalInstance = bootstrap.Modal.getInstance(modalElement);
-                if (modalInstance) {
-                    modalInstance.hide();
-                }
-                $('#crearEventoModal').modal('hide');
-                $('.modal-backdrop').remove();
+        formCrearEvento.addEventListener('submit', function (event) {
+            // Ya que hemos revertido la vista admin_config para usar POST tradicional,
+            // debemos eliminar la lógica AJAX de este listener.
 
-                document.getElementById('formCrearEvento').reset();
-            } else {
-                alert('El nombre del cliente, el origen, el destino, el chofer, la fecha y la hora de inicio son obligatorios.');
-            }
+            // Si el formulario se envía de forma tradicional (sin event.preventDefault() y fetch):
+            // 1. El navegador hace un POST a '{% url 'admin_config' %}'
+            // 2. Django guarda la reserva y hace un redirect('admin_config')
+            // 3. El navegador recarga la página completamente.
+
+            // Para volver al flujo tradicional, eliminaremos la lógica AJAX.
+
+            // ❌ ELIMINAR O COMENTAR LA LÓGICA AJAX:
+            /*
+            event.preventDefault(); 
+            const formData = new FormData(formCrearEvento);
+            const formUrl = formCrearEvento.getAttribute('action');
+            // ... (resto de la lógica fetch y manejo de JSON)
+            */
+           
+           // Si deseas que el formulario envíe de forma tradicional, SOLO DEJA ESTA LÍNEA DE CÓDIGO COMENTADA:
+           // **event.preventDefault()**
+           
+           // Si dejas el evento.preventDefault() comentado (como está aquí),
+           // el formulario se enviará de forma tradicional (POST y recarga de página).
         });
+
+        // -------------------------------------------------------------------------
+        // NOTA IMPORTANTE:
+        // Si quieres que el formulario se envíe de forma tradicional, asegúrate de
+        // que el código del listener de 'submit' NO contenga 'event.preventDefault()'.
+        // Si el formulario debe seguir el flujo tradicional:
+        
+        // 1. Elimina (o comenta) todo el código de 'formCrearEvento.addEventListener'
+        //    que realiza el 'fetch'.
+        // 2. Asegúrate de que el botón <button type="submit"> hace su función.
+        
+        // Mantendremos el listener vacío por ahora, asumiendo que el flujo tradicional
+        // ya funciona solo con el 'submit' del botón.
+        // -------------------------------------------------------------------------
+
+
+        // CÓDIGO PARA RESERVAS WEB (MANTENIDO, pero NO USA AJAX REAL con Django)
+        // ... (Tu código de reservas web continúa aquí, solo usa datos estáticos)
         const reservasWeb = [
             { id: 1, nombre: 'Luis Gárate', telefono: '987654321', correo: 'luis.garate@example.com', personas: 2, maletas: 3, desde: 'Santiago Centro', hasta: 'Aeropuerto SCL', fecha: '2025-08-29', hora: '15:00' },
             { id: 2, nombre: 'Sofía Soto', telefono: '912345678', correo: 'sofia.soto@example.com', personas: 4, maletas: 5, desde: 'Viña del Mar', hasta: 'Las Condes', fecha: '2025-08-30', hora: '08:00' },
