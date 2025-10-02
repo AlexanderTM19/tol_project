@@ -133,5 +133,48 @@ class Reservas(models.Model):
 
 
 
-    
+
+class ReservasWeb(models.Model):
+    Id_reserva = models.AutoField(primary_key=True, null=False)
+    Nombre_Cliente = models.CharField(max_length=50, null=False)
+    Apellidos_Cliente = models.CharField(max_length=50, blank=True, default="")
+    Telefono = models.CharField(max_length=20, null=False)
+    Correo = models.EmailField(blank=True, null=True)
+    Origen = models.ForeignKey(
+        Tarifas,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas_web_origen'
+    )
+    Destino = models.ForeignKey(
+        Tarifas,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas_web_destino'
+    )
+    Dirrecion = models.CharField(max_length=100, blank=True, default="")
+    Fecha = models.DateField()
+    Hora = models.TimeField()
+    Cantidad_pasajeros = models.IntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(4)
+        ]
+    )
+    Cantidad_maletas = models.IntegerField(
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(3)
+        ]
+    )
+    Vehiculo_solicitado = models.CharField(max_length=30, blank=True, default="")
+    Comentario = models.TextField(blank=True, default="")
+    Confirmacion = models.BooleanField(default=False)
+    Creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reserva web de {self.Nombre_Cliente} para {self.Fecha}"
+
  

@@ -203,6 +203,8 @@
                                 <th>Hora</th>
                                 <th>Personas</th>
                                 <th>Maletas</th>
+                                <th>Dirección</th>
+                                <th>Comentario</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -265,7 +267,9 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        var reservasIniciales = JSON.parse('{{ reservas_json|escapejs }}');
         var calendarEl = document.getElementById('calendar');
+        var choferesDisponibles = JSON.parse('{{ choferes_json|escapejs }}');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'es',
@@ -278,6 +282,7 @@
             editable: true,
             selectable: true,
             dayMaxEvents: true,
+            events: reservasIniciales,
             // ❌ ELIMINADA ESTA LÍNEA QUE CAUSABA EL ERROR:
             // Si quieres cargar reservas estáticas o precargadas al inicio,
             // lo harías aquí con un array de eventos o cargando la lista completa
@@ -357,44 +362,70 @@
         // -------------------------------------------------------------------------
 
 
-        // CÓDIGO PARA RESERVAS WEB (MANTENIDO, pero NO USA AJAX REAL con Django)
-        // ... (Tu código de reservas web continúa aquí, solo usa datos estáticos)
-        const reservasWeb = [
-            { id: 1, nombre: 'Luis Gárate', telefono: '987654321', correo: 'luis.garate@example.com', personas: 2, maletas: 3, desde: 'Santiago Centro', hasta: 'Aeropuerto SCL', fecha: '2025-08-29', hora: '15:00' },
-            { id: 2, nombre: 'Sofía Soto', telefono: '912345678', correo: 'sofia.soto@example.com', personas: 4, maletas: 5, desde: 'Viña del Mar', hasta: 'Las Condes', fecha: '2025-08-30', hora: '08:00' },
-            { id: 3, nombre: 'Pedro Orellana', telefono: '998877665', correo: 'pedro.orellana@example.com', personas: 1, maletas: 2, desde: 'Providencia', hasta: 'Vitacura', fecha: '2025-09-01', hora: '18:30' }
-        ];
-
-        // Referencias a los modales y botones
-        const nuevaReservaWebBtn = document.querySelector('[data-bs-target="#webReservasModal"]');
+        // CÓDIGO PARA RESERVAS WEB CON DATOS REALES
         const reservasWebTableBody = document.getElementById('reservasWebTableBody');
+        const webReservasModalEl = document.getElementById('webReservasModal');
         const seleccionarChoferModal = new bootstrap.Modal(document.getElementById('seleccionarChoferModal'));
         const confirmarAsignacionBtn = document.getElementById('confirmarAsignacionBtn');
         const choferSeleccionadoSelect = document.getElementById('choferSeleccionado');
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        let reservasWeb = [];
         let reservaPendiente = null;
 
-        // Abre el modal de reservas web y llena la tabla
-        nuevaReservaWebBtn.addEventListener('click', function () {
-            llenarTablaReservasWeb();
-            const modal = new bootstrap.Modal(document.getElementById('webReservasModal'));
-            modal.show();
+        webReservasModalEl.addEventListener('show.bs.modal', function () {
+            cargarReservasWeb();
         });
 
-        // Llena la tabla de reservas web
+        async function cargarReservasWeb() {
+            try {
+                const respuesta = await fetch('{% url 'reservas_web_pendientes' %}');
+                if (!respuesta.ok) {
+                    throw new Error('Error al cargar las reservas web');
+                }
+                const datos = await respuesta.json();
+                reservasWeb = datos.reservas || [];
+                llenarTablaReservasWeb();
+            } catch (error) {
+                console.error(error);
+                reservasWebTableBody.innerHTML = '<tr><td colspan="12" class="text-center text-danger">No se pudieron cargar las reservas web.</td></tr>';
+            }
+        }
+
+        function escapeHtml(texto) {
+            if (texto === null || texto === undefined) {
+                return '';
+            }
+            return texto.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function llenarTablaReservasWeb() {
             reservasWebTableBody.innerHTML = '';
+            if (reservasWeb.length === 0) {
+                const fila = document.createElement('tr');
+                fila.innerHTML = '<td colspan="12" class="text-center">No hay reservas pendientes.</td>';
+                reservasWebTableBody.appendChild(fila);
+                return;
+            }
+
             reservasWeb.forEach(reserva => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${reserva.nombre}</td>
-                    <td>${reserva.telefono}</td>
-                    <td>${reserva.correo}</td>
-                    <td>${reserva.desde}</td>
-                    <td>${reserva.hasta}</td>
-                    <td>${reserva.fecha}</td>
-                    <td>${reserva.hora}</td>
-                    <td>${reserva.personas}</td>
-                    <td>${reserva.maletas}</td>
+                    <td>${escapeHtml(reserva.nombre)}</td>
+                    <td>${escapeHtml(reserva.telefono)}</td>
+                    <td>${escapeHtml(reserva.correo)}</td>
+                    <td>${escapeHtml(reserva.desde)}</td>
+                    <td>${escapeHtml(reserva.hasta)}</td>
+                    <td>${escapeHtml(reserva.fecha)}</td>
+                    <td>${escapeHtml(reserva.hora)}</td>
+                    <td>${escapeHtml(reserva.personas)}</td>
+                    <td>${escapeHtml(reserva.maletas)}</td>
+                    <td>${escapeHtml(reserva.direccion || '')}</td>
+                    <td>${escapeHtml(reserva.comentario || '')}</td>
                     <td>
                         <button class="btn btn-sm btn-success aceptar-btn me-2" data-id="${reserva.id}"><i class="fas fa-check"></i></button>
                         <button class="btn btn-sm btn-danger rechazar-btn" data-id="${reserva.id}"><i class="fas fa-times"></i></button>
@@ -405,7 +436,6 @@
             agregarEventosBotones();
         }
 
-        // Agrega event listeners a los botones de la tabla
         function agregarEventosBotones() {
             document.querySelectorAll('.aceptar-btn').forEach(button => {
                 button.addEventListener('click', function () {
@@ -420,17 +450,9 @@
 
             document.querySelectorAll('.rechazar-btn').forEach(button => {
                 button.addEventListener('click', function () {
-                    const row = this.closest('tr');
                     const id = parseInt(this.dataset.id);
                     if (confirm('¿Está seguro de que desea rechazar esta reserva?')) {
-                        // Eliminar la reserva de la lista y actualizar la tabla
-                        const index = reservasWeb.findIndex(r => r.id === id);
-                        if (index !== -1) {
-                            reservasWeb.splice(index, 1);
-                        }
-                        // Reemplazar los botones con el icono de bloqueo
-                        const accionesCell = row.querySelector('td:last-child');
-                        accionesCell.innerHTML = '<i class="fas fa-ban text-danger"></i>';
+                        rechazarReservaWeb(id);
                     }
                 });
             });
@@ -439,60 +461,98 @@
         // Llena el select de choferes
         function llenarSelectChoferes() {
             choferSeleccionadoSelect.innerHTML = '<option value="" selected disabled>Seleccione un chofer</option>';
-            // Aquí deberías obtener la lista real de choferes de tu backend
-            // Por ahora, usaremos los mismos del modal de reserva manual
-            const choferes = ['Juan Pérez', 'Ana Torres', 'Carlos Rojas'];
-            choferes.forEach(chofer => {
+            choferesDisponibles.forEach(chofer => {
                 const option = document.createElement('option');
-                option.value = chofer;
-                option.textContent = chofer;
+                option.value = chofer.id;
+                option.textContent = chofer.nombre;
                 choferSeleccionadoSelect.appendChild(option);
             });
         }
 
         // Maneja la asignación del chofer y la adición al calendario
         confirmarAsignacionBtn.addEventListener('click', function () {
-            const chofer = choferSeleccionadoSelect.value;
-            if (chofer && reservaPendiente) {
-                const eventoStart = reservaPendiente.fecha + 'T' + reservaPendiente.hora + ':00';
-
-                // Agregar el evento al calendario
-                calendar.addEvent({
-                    title: `Reserva Web - ${reservaPendiente.nombre}`,
-                    start: eventoStart,
-                    extendedProps: {
-                        clienteNombre: reservaPendiente.nombre,
-                        clienteTelefono: reservaPendiente.telefono,
-                        clienteCorreo: reservaPendiente.correo,
-                        desde: reservaPendiente.desde,
-                        hasta: reservaPendiente.hasta,
-                        chofer: chofer
-                    },
-                    color: '#17a2b8' // Color distintivo para reservas web
-                });
-
-                // Cierra los modales y elimina la reserva de la lista
-                seleccionarChoferModal.hide();
-                const webReservasModal = bootstrap.Modal.getInstance(document.getElementById('webReservasModal'));
-                if (webReservasModal) {
-                    webReservasModal.hide();
-                }
-
-                // Eliminar la reserva de los datos de ejemplo y recargar la tabla
-                const index = reservasWeb.findIndex(r => r.id === reservaPendiente.id);
-                if (index !== -1) {
-                    reservasWeb.splice(index, 1);
-                }
-                llenarTablaReservasWeb();
-
-                // Limpia la variable de reserva
-                reservaPendiente = null;
-                $('.modal-backdrop').remove();
-                alert('Reserva aceptada y asignada al calendario con éxito.');
+            const choferSeleccionado = choferSeleccionadoSelect.value;
+            if (choferSeleccionado && reservaPendiente) {
+                aceptarReservaWeb(reservaPendiente.id, choferSeleccionado);
             } else {
                 alert('Debe seleccionar un chofer.');
             }
         });
+
+        async function aceptarReservaWeb(reservaId, choferId) {
+            try {
+                const respuesta = await fetch('{% url 'aceptar_reserva_web' %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        reserva_id: reservaId,
+                        chofer_id: choferId,
+                    }),
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error('No se pudo aceptar la reserva');
+                }
+
+                const datos = await respuesta.json();
+                if (datos.exito) {
+                    if (datos.evento) {
+                        calendar.addEvent(datos.evento);
+                    }
+
+                    reservasWeb = reservasWeb.filter(r => r.id !== reservaId);
+                    llenarTablaReservasWeb();
+
+                    seleccionarChoferModal.hide();
+                    const webReservasModal = bootstrap.Modal.getInstance(webReservasModalEl);
+                    if (webReservasModal) {
+                        webReservasModal.hide();
+                    }
+
+                    choferSeleccionadoSelect.selectedIndex = 0;
+                    reservaPendiente = null;
+                    alert('Reserva aceptada y asignada al calendario con éxito.');
+                } else {
+                    alert(datos.mensaje || 'No se pudo aceptar la reserva.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Ocurrió un error al aceptar la reserva.');
+            }
+        }
+
+        async function rechazarReservaWeb(reservaId) {
+            try {
+                const respuesta = await fetch('{% url 'rechazar_reserva_web' %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        reserva_id: reservaId,
+                    }),
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error('No se pudo rechazar la reserva');
+                }
+
+                const datos = await respuesta.json();
+                if (datos.exito) {
+                    reservasWeb = reservasWeb.filter(r => r.id !== reservaId);
+                    llenarTablaReservasWeb();
+                } else {
+                    alert(datos.mensaje || 'No se pudo rechazar la reserva.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Ocurrió un error al rechazar la reserva.');
+            }
+        }
     });
 </script>
 {% endblock %}

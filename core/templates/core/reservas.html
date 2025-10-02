@@ -15,20 +15,29 @@
             <div class="col-lg-7">
                 <div class="contact-form-container">
                     <form id="booking-form" action="#" method="post" class="php-email-form contact-form">
+                        {% csrf_token %}
                         <div id="step-1">
                             <div class="row">
                                 <div class="col-md-12 col-lg-6">
                                     <div class="form-field">
-                                        <label for="from-location" class="field-label">Desde:</label>
-                                        <input type="text" name="from_location" class="form-input" id="from-location"
-                                            placeholder="Origen" required>
+                                        <label for="origen-select" class="field-label">Desde:</label>
+                                        <select name="Origen" class="form-select" id="origen-select" required>
+                                            <option value="">Seleccione...</option>
+                                            {% for comuna in tarifas %}
+                                            <option value="{{ comuna.id_tarifa }}">{{ comuna.Nombre_Comuna }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-md-12 col-lg-6">
                                     <div class="form-field">
-                                        <label for="to-location" class="field-label">Hasta:</label>
-                                        <input type="text" class="form-input" name="to_location" id="to-location"
-                                            placeholder="Destino" required>
+                                        <label for="destino-select" class="field-label">Hasta:</label>
+                                        <select name="Destino" class="form-select" id="destino-select" required>
+                                            <option value="">Seleccione...</option>
+                                            {% for comuna in tarifas %}
+                                            <option value="{{ comuna.id_tarifa }}">{{ comuna.Nombre_Comuna }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -57,15 +66,15 @@
                             <div class="row">
                                 <div class="col-md-12 col-lg-6">
                                     <div class="form-field">
-                                        <label for="from-location" class="field-label">Nombre:</label>
-                                        <input type="text" name="from_location" class="form-input" id="from-location"
+                                        <label for="nombre-cliente" class="field-label">Nombre:</label>
+                                        <input type="text" name="Nombre_Cliente" class="form-input" id="nombre-cliente"
                                             placeholder="Escriba..." required>
                                     </div>
                                 </div>
                                 <div class="col-md-12 col-lg-6">
                                     <div class="form-field">
-                                        <label for="to-location" class="field-label">Teléfono:</label>
-                                        <input type="text" class="form-input" name="to_location" id="to-location"
+                                        <label for="apellidos-cliente" class="field-label">Apellidos:</label>
+                                        <input type="text" class="form-input" name="Apellidos_Cliente" id="apellidos-cliente"
                                             placeholder="Escriba..." required>
                                     </div>
                                 </div>
@@ -73,17 +82,35 @@
                             <div class="row">
                                 <div class="col-md-12 col-lg-12">
                                     <div class="form-field">
-                                        <label for="from-location" class="field-label">Email:</label>
-                                        <input type="text" name="from_location" class="form-input" id="from-location"
-                                            placeholder="...@gmail.com" required>
+                                        <label for="telefono-cliente" class="field-label">Teléfono:</label>
+                                        <input type="text" name="Telefono" class="form-input" id="telefono-cliente"
+                                            placeholder="Escriba..." required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12">
+                                    <div class="form-field">
+                                        <label for="correo-cliente" class="field-label">Email:</label>
+                                        <input type="email" name="Correo" class="form-input" id="correo-cliente"
+                                            placeholder="...@gmail.com">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12">
+                                    <div class="form-field">
+                                        <label for="direccion-cliente" class="field-label">Dirección del cliente:</label>
+                                        <input type="text" name="Dirrecion" class="form-input" id="direccion-cliente"
+                                            placeholder="Dirección del retiro" required>
                                     </div>
                                 </div>
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="form-field">
-                                        <label for="pax-count" class="field-label">Número de personas:</label>
-                                        <select name="pax_count" id="pax-count" class="form-select" required>
+                                        <label for="personas-select" class="field-label">Número de personas:</label>
+                                        <select name="Cantidad_pasajeros" id="personas-select" class="form-select" required>
                                             <option value="">Seleccione...</option>
                                             {% for i in "1234"|make_list %}
                                             <option value="{{ i }}">{{ i }}</option>
@@ -93,9 +120,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-field">
-                                        <label for="pax-count" class="field-label">Número de maletas:</label>
-                                        <select name="pax_count" id="pax-count" class="form-select" required>
+                                        <label for="maletas-select" class="field-label">Número de maletas:</label>
+                                        <select name="Cantidad_maletas" id="maletas-select" class="form-select" required>
                                             <option value="">Seleccione...</option>
+                                            <option value="0">0</option>
                                             {% for i in "123"|make_list %}
                                             <option value="{{ i }}">{{ i }}</option>
                                             {% endfor %}
@@ -109,13 +137,19 @@
                                     <div class="vehicle-card p-3 border rounded">
                                         <h4 class="card-title">Taxi (hasta 4 personas)</h4>
                                         <p class="card-text">Ideal para grupos pequeños. Confort y seguridad.</p>
-                                        <input type="radio" name="vehicle" value="taxi-4" id="taxi-4"
+                                        <input type="radio" name="Vehiculo_solicitado" value="Taxi" id="taxi-4"
                                             class="form-check-input" required>
                                         <label class="form-check-label" for="taxi-4">
                                             Seleccionar
                                         </label>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div class="form-field mb-4">
+                                <label for="comentario-reserva" class="field-label">Comentario (opcional):</label>
+                                <textarea name="Comentario" id="comentario-reserva" class="form-input" rows="3"
+                                    placeholder="Indicaciones adicionales"></textarea>
                             </div>
 
                             <div class="my-3">
@@ -186,17 +220,17 @@
         const step2 = document.getElementById('step-2');
         const step3 = document.getElementById('step-3');
         const form = document.getElementById('booking-form');
-
         const successAlert = document.getElementById('success-alert');
+        const origenSelect = document.getElementById('origen-select');
+        const destinoSelect = document.getElementById('destino-select');
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
-        nextButton.addEventListener('click', function (event) {
-            // Validar que los campos del paso 1 estén llenos y que la fecha/hora sea válida
-            const fromLocation = document.getElementById('from-location').value;
-            const toLocation = document.getElementById('to-location').value;
-            const reservationDateTime = document.getElementById('reservation-datetime').value;
+        nextButton.addEventListener('click', function () {
+            const origen = origenSelect.value;
+            const destino = destinoSelect.value;
+            const reservationDateTime = dateTimeInput.value;
 
-            if (fromLocation && toLocation && reservationDateTime) {
-                // Validación adicional para la fecha y hora
+            if (origen && destino && reservationDateTime) {
                 const selectedDateTime = new Date(reservationDateTime);
                 const now = new Date();
 
@@ -207,20 +241,68 @@
                     alert('Por favor, selecciona una fecha y hora que no haya pasado.');
                 }
             } else {
-                form.reportValidity(); // Muestra mensajes de error de validación del navegador
+                form.reportValidity();
             }
         });
-        form.addEventListener('submit', function (event) {
+
+        form.addEventListener('submit', async function (event) {
             event.preventDefault();
-            step2.style.display = 'none';
 
-            successAlert.classList.remove('d-none');
+            const datetimeValue = dateTimeInput.value;
+            if (!datetimeValue) {
+                alert('Debes seleccionar fecha y hora para continuar.');
+                return;
+            }
 
-            step3.style.display = 'block';
+            const [fecha, hora] = datetimeValue.split('T');
+            const datos = {
+                Nombre_Cliente: document.getElementById('nombre-cliente').value.trim(),
+                Apellidos_Cliente: document.getElementById('apellidos-cliente').value.trim(),
+                Telefono: document.getElementById('telefono-cliente').value.trim(),
+                Correo: document.getElementById('correo-cliente').value.trim(),
+                Origen: origenSelect.value || null,
+                Destino: destinoSelect.value || null,
+                Dirrecion: document.getElementById('direccion-cliente').value.trim(),
+                Fecha: fecha,
+                Hora: hora,
+                Cantidad_pasajeros: document.getElementById('personas-select').value,
+                Cantidad_maletas: document.getElementById('maletas-select').value,
+                Vehiculo_solicitado: document.querySelector('input[name="Vehiculo_solicitado"]:checked') ? document.querySelector('input[name="Vehiculo_solicitado"]:checked').value : '',
+                Comentario: document.getElementById('comentario-reserva').value.trim(),
+            };
 
-            setTimeout(() => {
-                window.location.href = "{% url 'inicio' %}";
-            }, 5000); // Se mostrará por 5 segundos
+            try {
+                const respuesta = await fetch('{% url 'crear_reserva_web' %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify(datos),
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error('No se pudo completar la reserva');
+                }
+
+                const resultado = await respuesta.json();
+                if (resultado.exito) {
+                    step2.style.display = 'none';
+                    successAlert.classList.remove('d-none');
+                    step3.style.display = 'block';
+                    form.reset();
+                    setMinDateTime();
+                    setTimeout(() => {
+                        window.location.href = "{% url 'inicio' %}";
+                    }, 5000);
+                } else {
+                    const mensajes = resultado.errores ? Object.values(resultado.errores).flat().join(' ') : 'No se pudo guardar la reserva.';
+                    alert(mensajes);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Ocurrió un error al enviar la reserva. Inténtalo nuevamente.');
+            }
         });
     });
 </script>

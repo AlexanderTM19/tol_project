@@ -1,6 +1,6 @@
 # En tu archivo core/forms.py
 from django import forms
-from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas, Reservas
+from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb
 from django.core.validators import MinValueValidator, MaxValueValidator 
 
 
@@ -333,3 +333,38 @@ class ReservasForm(forms.ModelForm):
                 "El Origen y el Destino no pueden ser la misma Comuna."
             )
         return cleaned_data
+
+
+class ReservasWebForm(forms.ModelForm):
+    class Meta:
+        model = ReservasWeb
+        fields = [
+            'Nombre_Cliente',
+            'Apellidos_Cliente',
+            'Telefono',
+            'Correo',
+            'Origen',
+            'Destino',
+            'Dirrecion',
+            'Fecha',
+            'Hora',
+            'Cantidad_pasajeros',
+            'Cantidad_maletas',
+            'Vehiculo_solicitado',
+            'Comentario',
+        ]
+        widgets = {
+            'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
+            'Apellidos_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
+            'Telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 912345678'}),
+            'Correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'usuario@ejemplo.com'}),
+            'Origen': forms.Select(attrs={'class': 'form-select'}),
+            'Destino': forms.Select(attrs={'class': 'form-select'}),
+            'Dirrecion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección completa'}),
+            'Fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
+            'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
+            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehículo'}),
+            'Comentario': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Comentario opcional'}),
+        }
