@@ -1,6 +1,8 @@
 # En tu archivo core/forms.py
 from django import forms
-from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas
+from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas, Reservas
+from django.core.validators import MinValueValidator, MaxValueValidator 
+
 
 #-------------------------------------------------------------------------------------------------------------------------------
 class ClientesForm(forms.ModelForm):
@@ -288,3 +290,46 @@ class TarifasForm(forms.ModelForm):
                     'class': 'form-control'
             }),
         }
+
+#-------------------------------------------------------------------------------------------------------------------------------
+
+class ReservasForm(forms.ModelForm):
+    class Meta:
+        model = Reservas
+        fields = '__all__' 
+        widgets = {
+            'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'}),
+            'Apellidos_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tus apellidos'}),
+            'Telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 912345678'}),
+            'Correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'opcional@ejemplo.com'}),
+            
+            # Para los campos ForeignKey, se usa Select o SelectMultiple.
+            # Puedes usar empty_label para que el usuario sepa que debe seleccionar
+            'Origen': forms.Select(attrs={'class': 'form-select'}),
+            'Destino': forms.Select(attrs={'class': 'form-select'}),
+            'Dirrecion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Av. siempreviva 123'}),
+
+            # Usamos widgets de HTML5 para mejor UI/UX en navegadores
+            'Fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+
+            # Para campos numéricos, TextInput o NumberInput. 
+            # El validador del modelo se encargará de limitar el rango.
+            'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
+            'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
+            
+            'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),
+            'Confirmacion': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+    
+    # Si quisieras asegurarte de que la Comuna de Origen NO sea igual a la Comuna de Destino
+    def clean(self):
+        cleaned_data = super().clean()
+        origen = cleaned_data.get("Origen")
+        destino = cleaned_data.get("Destino")
+
+        if origen and destino and origen == destino:
+            raise forms.ValidationError(
+                "El Origen y el Destino no pueden ser la misma Comuna."
+            )
+        return cleaned_data

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator 
 
 #Modelo de los clientes 
 class Clientes(models.Model):
@@ -7,7 +8,7 @@ class Clientes(models.Model):
     Nombres = models.CharField(max_length=50)
     Apellidos = models.CharField(max_length=60)
     Telefono = models.CharField(max_length=20)
-    Correo =models.EmailField(blank=True, null=True)
+    Correo = models.EmailField(blank=True, null=True)
     Cantidad_viajes= models.IntegerField(default=0)
     
 
@@ -88,7 +89,8 @@ class Conductores(models.Model):
 
     def __str__(self):
         return f'{self.usuario.Nombres} {self.usuario.Apellidos}'
-    
+#----------------------------------------------------------------------------------------------------------------------------------
+   
 #Modelo de las tarifas
 class Tarifas(models.Model):
     id_tarifa = models.AutoField(primary_key=True)
@@ -96,8 +98,40 @@ class Tarifas(models.Model):
     Valor = models.IntegerField()
     
     def __str__(self):
-        return f'Valor: $:{self.Valor}'
+        return self.Nombre_Comuna
     
+
+#----------------------------------------------------------------------------------------------------------------------------------
+   
+#Modelo de las reservas
+
+class Reservas(models.Model):
+    Id_reserva = models.AutoField(primary_key=True, null=False)
+    Nombre_Cliente = models.CharField(max_length=50, null=False)
+    Apellidos_Cliente = models.CharField(max_length=50, null=False)
+    Telefono = models.CharField(max_length=20, null=False)
+    Correo = models.EmailField(blank=True, null=True)
+    Origen = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_origen')
+    Destino = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_destino')
+    Dirrecion = models.CharField(max_length=50, null=False)
+    Fecha = models.DateField()
+    Hora = models.TimeField()
+    Cantidad_pasajeros = models.IntegerField(validators=[
+                MinValueValidator(0), # Mínimo permitido (por ejemplo, 0)
+                MaxValueValidator(4)  # Máximo permitido (si solo quieres un dígito)
+        ])
+    Cantidad_maletas = models.IntegerField(
+        validators=[
+                MinValueValidator(0), # Mínimo permitido (por ejemplo, 0)
+                MaxValueValidator(2)  # Máximo permitido (si solo quieres un dígito)
+        ])
+    Confirmacion = models.BooleanField(default=False)
+    Chofer_asignado = models.ForeignKey(Conductores, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return self.Id_reserva
+
+
 
     
  

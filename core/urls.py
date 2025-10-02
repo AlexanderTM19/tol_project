@@ -16,7 +16,7 @@ urlpatterns = [
     path('administrador/form_crearConductor', views.form_crear_conductor, name='form_crear_conductor'),
     path('administrador/form_crearVehiculo', views.form_crear_vehiculo, name='form_crear_vehiculo'),
     path('administrador/clientes', views.clientes, name='clientes'),
-    path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'),   
+    path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'), 
     path('administrador/vista_tarifas_admin', views.vista_tarifas_admin, name='vista_tarifas_admin'),
     path('administrador/form_crear_usuarios', views.form_crear_usuarios, name='form_crear_usuarios'),
     path('administrador/form_modUser/<id>',views.form_mod_usu, name='form_mod_usu'),
@@ -32,5 +32,6 @@ urlpatterns = [
     # Ficha conductor y perfil conductor
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
     path('perfil-conductor/', views.perfil_conductor_view, name='perfil_conductor'),
-]
 
+
+]
