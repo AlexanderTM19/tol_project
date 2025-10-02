@@ -88,3 +88,16 @@ class Conductores(models.Model):
 
     def __str__(self):
         return f'{self.usuario.Nombres} {self.usuario.Apellidos}'
+    
+#Modelo de las tarifas
+class Tarifas(models.Model):
+    id_tarifa = models.AutoField(primary_key=True)
+    Nombre_Comuna = models.CharField(max_length=50)
+    Valor = models.IntegerField()
+    
+    def __str__(self):
+        return f'Valor: $:{self.Valor}'
+    
+
+    
+ 
