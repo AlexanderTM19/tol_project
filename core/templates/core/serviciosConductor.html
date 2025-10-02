@@ -1,0 +1,359 @@
+{% extends 'core/conductor.html' %}
+{% load static %}
+
+{% block title %}Servicios asignados{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .servicios-wrapper {
+        background: #f5f7fb;
+        min-height: 100vh;
+        padding-bottom: 3rem;
+    }
+
+    .hero-card {
+        background: linear-gradient(135deg, #1f7cf4 0%, #49befe 100%);
+        border-radius: 24px;
+        color: #ffffff;
+        padding: 2.5rem;
+        box-shadow: 0 20px 45px rgba(31, 124, 244, 0.25);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .hero-card::after {
+        content: "";
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 180px;
+        height: 180px;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 50%;
+        filter: blur(0.5px);
+    }
+
+    .hero-card .badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.6rem 1.2rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .hero-card h1 {
+        font-weight: 700;
+    }
+
+    .resumen-stats {
+        gap: 1.5rem;
+    }
+
+    .resumen-card {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 1.8rem 1.6rem;
+        box-shadow: 0 18px 30px rgba(13, 39, 80, 0.12);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .resumen-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(73, 190, 254, 0.12), rgba(31, 124, 244, 0.08));
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .resumen-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 22px 40px rgba(13, 39, 80, 0.16);
+    }
+
+    .resumen-card:hover::after {
+        opacity: 1;
+    }
+
+    .resumen-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #1f7cf4;
+        background: rgba(31, 124, 244, 0.1);
+    }
+
+    .timeline-section {
+        margin-top: 3rem;
+    }
+
+    .timeline-title {
+        font-weight: 700;
+        color: #103a70;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .timeline-title i {
+        font-size: 1.4rem;
+        color: #1f7cf4;
+    }
+
+    .reserva-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.6rem;
+        box-shadow: 0 12px 24px rgba(15, 27, 60, 0.1);
+        margin-bottom: 1.4rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(16, 58, 112, 0.05);
+        animation: fadeInUp 0.6s ease both;
+    }
+
+    .reserva-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(31, 124, 244, 0.06), rgba(73, 190, 254, 0.06));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .reserva-card:hover::before {
+        opacity: 1;
+    }
+
+    .reserva-badge {
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(31, 124, 244, 0.12);
+        color: #1f7cf4;
+        font-weight: 600;
+    }
+
+    .reserva-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 1.2rem;
+    }
+
+    .meta-item {
+        background: rgba(16, 58, 112, 0.04);
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        color: #103a70;
+    }
+
+    .meta-item i {
+        color: #1f7cf4;
+        font-size: 1rem;
+    }
+
+    .badge-historico {
+        background: rgba(239, 71, 111, 0.14);
+        color: #ef476f;
+    }
+
+    .empty-state {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2.8rem 2rem;
+        text-align: center;
+        color: #58729e;
+        box-shadow: 0 14px 30px rgba(16, 58, 112, 0.08);
+    }
+
+    .empty-state i {
+        font-size: 2.4rem;
+        color: #1f7cf4;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 18px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="servicios-wrapper">
+    <div class="container-fluid py-4 px-4 px-xl-5">
+        <div class="hero-card mb-4">
+            <span class="badge">Servicios asignados</span>
+            <div class="row align-items-center mt-3">
+                <div class="col-lg-7">
+                    <h1 class="mb-3">Hola, {{ conductor.usuario.Nombres }} {{ conductor.usuario.Apellidos }}</h1>
+                    <p class="mb-0 fs-5">Revisa los viajes que tienes agendados y tu historial reciente. Mantén tus datos al día para brindar siempre un servicio impecable.</p>
+                </div>
+                <div class="col-lg-5 mt-4 mt-lg-0">
+                    <div class="row resumen-stats">
+                        <div class="col-sm-6">
+                            <div class="resumen-card text-start">
+                                <div class="resumen-icon">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+                                <p class="text-uppercase text-muted mb-1 small">Reservas futuras</p>
+                                <h3 class="mb-0">{{ reservas_futuras|length }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="resumen-card text-start">
+                                <div class="resumen-icon">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <p class="text-uppercase text-muted mb-1 small">Historial</p>
+                                <h3 class="mb-0">{{ reservas_historicas|length }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="resumen-card text-start">
+                                <div class="resumen-icon">
+                                    <i class="fa-solid fa-trophy"></i>
+                                </div>
+                                <p class="text-uppercase text-muted mb-1 small">Total asignado</p>
+                                <h3 class="mb-0">{{ total_reservas }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-section">
+            <h2 class="timeline-title"><i class="fa-solid fa-calendar-check"></i>Próximos servicios</h2>
+            {% if reservas_futuras %}
+                {% for reserva in reservas_futuras %}
+                    <article class="reserva-card">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="reserva-badge">Pendiente</span>
+                            <div class="text-muted small">
+                                <i class="fa-regular fa-clock me-1"></i>
+                                {{ reserva.inicio|date:"d \d\e F, H:i" }} hrs
+                            </div>
+                        </div>
+                        <h4 class="mt-3 mb-1">{{ reserva.instancia.Nombre_Cliente }} {{ reserva.instancia.Apellidos_Cliente }}</h4>
+                        <p class="text-muted mb-0">Teléfono: {{ reserva.instancia.Telefono }}{% if reserva.instancia.Correo %} · Correo: {{ reserva.instancia.Correo }}{% endif %}</p>
+                        <div class="reserva-meta mt-3">
+                            <div class="meta-item">
+                                <i class="fa-solid fa-location-arrow"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Origen</span>
+                                    <strong>{{ reserva.origen|default:"Sin información" }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-map-marker-alt"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Destino</span>
+                                    <strong>{{ reserva.destino|default:"Sin información" }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Pasajeros</span>
+                                    <strong>{{ reserva.instancia.Cantidad_pasajeros }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-suitcase-rolling"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Maletas</span>
+                                    <strong>{{ reserva.instancia.Cantidad_maletas }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <h4 class="mt-2 mb-2">No tienes servicios programados</h4>
+                    <p class="mb-0">Cuando se te asigne un nuevo viaje aparecerá aquí. Mantente atento a las notificaciones.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="timeline-section mt-5">
+            <h2 class="timeline-title"><i class="fa-solid fa-route"></i>Historial reciente</h2>
+            {% if reservas_historicas %}
+                {% for reserva in reservas_historicas %}
+                    <article class="reserva-card">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="reserva-badge badge-historico">Completado</span>
+                            <div class="text-muted small">
+                                <i class="fa-regular fa-clock me-1"></i>
+                                {{ reserva.inicio|date:"d \d\e F, H:i" }} hrs
+                            </div>
+                        </div>
+                        <h4 class="mt-3 mb-1">{{ reserva.instancia.Nombre_Cliente }} {{ reserva.instancia.Apellidos_Cliente }}</h4>
+                        <p class="text-muted mb-0">Teléfono: {{ reserva.instancia.Telefono }}{% if reserva.instancia.Correo %} · Correo: {{ reserva.instancia.Correo }}{% endif %}</p>
+                        <div class="reserva-meta mt-3">
+                            <div class="meta-item">
+                                <i class="fa-solid fa-location-arrow"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Origen</span>
+                                    <strong>{{ reserva.origen|default:"Sin información" }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-map-marker-alt"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Destino</span>
+                                    <strong>{{ reserva.destino|default:"Sin información" }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-users"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Pasajeros</span>
+                                    <strong>{{ reserva.instancia.Cantidad_pasajeros }}</strong>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-suitcase-rolling"></i>
+                                <div>
+                                    <span class="text-muted small d-block">Maletas</span>
+                                    <strong>{{ reserva.instancia.Cantidad_maletas }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <h4 class="mt-2 mb-2">Sin historial disponible</h4>
+                    <p class="mb-0">Aún no has completado servicios registrados. Una vez finalizados aparecerán en este listado.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

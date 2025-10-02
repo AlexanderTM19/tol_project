@@ -7,6 +7,7 @@ from django.shortcuts import render
 urlpatterns = [
     path('', views.index, name='inicio'),
     path('reservas/', views.reservas, name='reservas'),
+    path('reservas/web/crear', views.crear_reserva_web, name='crear_reserva_web'),
     path('tarifas/', views.tarifas, name='tarifas'),
     path('contacto/', views.contacto, name='contacto'),
 
@@ -24,6 +25,9 @@ urlpatterns = [
     path('administrador/form_clientes', views.form_clientes, name='form_clientes'),
     path('administrador/form_modpro/<id>',views.form_modpro, name='form_modpro'),
     path('administrador/', views.admin_config, name='admin_config'),
+    path('administrador/reservas-web/pendientes', views.reservas_web_pendientes, name='reservas_web_pendientes'),
+    path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
+    path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),
 
     # Login y Logout
     path('login/', views.login_view, name='login'),
@@ -32,6 +36,7 @@ urlpatterns = [
     # Ficha conductor y perfil conductor
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
     path('perfil-conductor/', views.perfil_conductor_view, name='perfil_conductor'),
+    path('servicios-conductor/', views.servicios_conductor, name='servicios_conductor'),
 
 
 ]

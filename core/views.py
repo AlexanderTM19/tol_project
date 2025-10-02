@@ -5,12 +5,16 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm,TarifasForm,ReservasForm
-from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb
 import random
 import json
 from django.http import JsonResponse
 from django.utils.dateformat import DateFormat 
+from datetime import datetime
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 # ❌ FUNCIÓN events_json ELIMINADA para revertir la funcionalidad AJAX del calendario.
 # def events_json(request):
@@ -62,7 +66,13 @@ def index(request):
     return render(request, 'core/index.html')
 
 def reservas(request):
-    return render(request, 'core/reservas.html')
+    tarifas_lista = Tarifas.objects.all()
+    formulario = ReservasWebForm()
+    contexto = {
+        'tarifas': tarifas_lista,
+        'formulario_reserva_web': formulario,
+    }
+    return render(request, 'core/reservas.html', contexto)
 
 def tarifas(request):
     tarifas_lista = Tarifas.objects.all()
@@ -163,6 +173,45 @@ def perfil_conductor_view(request):
         'vehiculo': conductor.vehiculo,
     }
     return render(request, 'core/perfilConductor.html', contexto)
+
+
+@login_required
+def servicios_conductor(request):
+    try:
+        conductor = Conductores.objects.select_related('usuario').get(usuario=request.user)
+    except Conductores.DoesNotExist:
+        return redirect('inicio')
+
+    reservas_asignadas = Reservas.objects.select_related('Origen', 'Destino').filter(
+        Chofer_asignado=conductor
+    ).order_by('Fecha', 'Hora')
+
+    ahora = timezone.localtime()
+    ahora_naive = ahora.replace(tzinfo=None)
+
+    reservas_enriquecidas = []
+    for reserva in reservas_asignadas:
+        inicio = datetime.combine(reserva.Fecha, reserva.Hora)
+        es_pasada = inicio < ahora_naive
+        reservas_enriquecidas.append({
+            'instancia': reserva,
+            'inicio': inicio,
+            'es_pasada': es_pasada,
+            'origen': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
+            'destino': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
+        })
+
+    futuras = [res for res in reservas_enriquecidas if not res['es_pasada']]
+    historicas = [res for res in reservas_enriquecidas if res['es_pasada']]
+
+    contexto = {
+        'conductor': conductor,
+        'reservas_futuras': futuras,
+        'reservas_historicas': historicas,
+        'total_reservas': len(reservas_enriquecidas),
+    }
+
+    return render(request, 'core/serviciosConductor.html', contexto)
 #-------------------------------------------------------------------------------------------------------------------------------
 
 # ✅ Vistas de administrador (requieren login + superuser)
@@ -471,9 +520,155 @@ def admin_config(request):
         # En una solicitud GET, inicializa un formulario vacío
         form = ReservasForm()
 
+    reservas = Reservas.objects.select_related('Origen', 'Destino', 'Chofer_asignado__usuario').all()
+    eventos = []
+    for reserva in reservas:
+        inicio = datetime.combine(reserva.Fecha, reserva.Hora)
+        nombre_cliente = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip()
+        chofer_asignado = None
+        if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
+            chofer_usuario = reserva.Chofer_asignado.usuario
+            chofer_asignado = f"{chofer_usuario.Nombres} {chofer_usuario.Apellidos}".strip()
+
+        eventos.append({
+            'id': str(reserva.Id_reserva),
+            'title': f"Reserva - {nombre_cliente}".strip(),
+            'start': inicio.isoformat(),
+            'extendedProps': {
+                'clienteNombre': nombre_cliente,
+                'clienteTelefono': reserva.Telefono,
+                'clienteCorreo': reserva.Correo or '',
+                'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
+                'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
+                'chofer': chofer_asignado or 'Sin asignar',
+            }
+        })
+
     contexto = {
         'form_reserva': form, 
         'mensaje': mensaje, 
+        'reservas_json': json.dumps(eventos, ensure_ascii=False),
+        'choferes_json': json.dumps([
+            {
+                'id': conductor.pk,
+                'nombre': f"{conductor.usuario.Nombres} {conductor.usuario.Apellidos}".strip()
+            }
+            for conductor in Conductores.objects.select_related('usuario').all()
+            if conductor.usuario
+        ], ensure_ascii=False),
     }
     
     return render(request, 'core/reservasAdministrador.html', contexto)
+
+
+@require_POST
+def crear_reserva_web(request):
+    try:
+        datos = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
+
+    formulario = ReservasWebForm(datos)
+    if formulario.is_valid():
+        formulario.save()
+        return JsonResponse({'exito': True})
+
+    return JsonResponse({'exito': False, 'errores': formulario.errors}, status=400)
+
+
+@login_required
+@user_passes_test(es_admin)
+def reservas_web_pendientes(request):
+    reservas_pendientes = ReservasWeb.objects.select_related('Origen', 'Destino').order_by('Fecha', 'Hora')
+    datos = []
+    for reserva in reservas_pendientes:
+        datos.append({
+            'id': reserva.Id_reserva,
+            'nombre': f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
+            'telefono': reserva.Telefono,
+            'correo': reserva.Correo or '',
+            'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
+            'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
+            'direccion': reserva.Dirrecion,
+            'fecha': reserva.Fecha.strftime('%Y-%m-%d'),
+            'hora': reserva.Hora.strftime('%H:%M'),
+            'personas': reserva.Cantidad_pasajeros,
+            'maletas': reserva.Cantidad_maletas,
+            'comentario': reserva.Comentario,
+        })
+
+    return JsonResponse({'reservas': datos})
+
+
+@login_required
+@user_passes_test(es_admin)
+@require_POST
+def aceptar_reserva_web(request):
+    try:
+        datos = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
+
+    reserva_id = datos.get('reserva_id')
+    chofer_id = datos.get('chofer_id')
+
+    if not reserva_id or not chofer_id:
+        return JsonResponse({'exito': False, 'mensaje': 'Datos incompletos'}, status=400)
+
+    reserva_web = get_object_or_404(ReservasWeb, pk=reserva_id)
+    chofer = get_object_or_404(Conductores.objects.select_related('usuario'), pk=chofer_id)
+
+    reserva_confirmada = Reservas.objects.create(
+        Nombre_Cliente=reserva_web.Nombre_Cliente,
+        Apellidos_Cliente=reserva_web.Apellidos_Cliente,
+        Telefono=reserva_web.Telefono,
+        Correo=reserva_web.Correo,
+        Origen=reserva_web.Origen,
+        Destino=reserva_web.Destino,
+        Dirrecion=reserva_web.Dirrecion,
+        Fecha=reserva_web.Fecha,
+        Hora=reserva_web.Hora,
+        Cantidad_pasajeros=reserva_web.Cantidad_pasajeros,
+        Cantidad_maletas=reserva_web.Cantidad_maletas,
+        Confirmacion=True,
+        Chofer_asignado=chofer,
+    )
+
+    evento = {
+        'id': str(reserva_confirmada.Id_reserva),
+        'title': f"Reserva - {reserva_confirmada.Nombre_Cliente} {reserva_confirmada.Apellidos_Cliente}".strip(),
+        'start': datetime.combine(reserva_confirmada.Fecha, reserva_confirmada.Hora).isoformat(),
+        'extendedProps': {
+            'clienteNombre': f"{reserva_confirmada.Nombre_Cliente} {reserva_confirmada.Apellidos_Cliente}".strip(),
+            'clienteTelefono': reserva_confirmada.Telefono,
+            'clienteCorreo': reserva_confirmada.Correo or '',
+            'desde': reserva_confirmada.Origen.Nombre_Comuna if reserva_confirmada.Origen else '',
+            'hasta': reserva_confirmada.Destino.Nombre_Comuna if reserva_confirmada.Destino else '',
+            'chofer': f"{chofer.usuario.Nombres} {chofer.usuario.Apellidos}".strip(),
+        },
+        'color': '#17a2b8',
+    }
+
+    reserva_web.delete()
+
+    return JsonResponse({'exito': True, 'evento': evento})
+
+
+@login_required
+@user_passes_test(es_admin)
+@require_POST
+def rechazar_reserva_web(request):
+    try:
+        datos = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
+
+    reserva_id = datos.get('reserva_id')
+
+    if not reserva_id:
+        return JsonResponse({'exito': False, 'mensaje': 'Datos incompletos'}, status=400)
+
+    reserva_web = get_object_or_404(ReservasWeb, pk=reserva_id)
+    reserva_web.delete()
+
+    return JsonResponse({'exito': True})

@@ -58,6 +58,11 @@
                     <i class="fa-solid fa-circle-user me-3"></i>
                     <span class="hide-on-collapse">Perfil</span>
                 </a>
+                <a href="{% url 'servicios_conductor' %}"
+                    class="{% if request.resolver_match.url_name == 'servicios_conductor' %}active{% endif %} sidebar-link text-decoration-none p-3">
+                    <i class="fa-solid fa-list-check me-3"></i>
+                    <span class="hide-on-collapse">Servicios asignados</span>
+                </a>
             </div>
             <!---->
             <div class="profile-section mt-auto p-4">
