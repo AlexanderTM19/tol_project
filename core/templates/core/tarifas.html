@@ -5,7 +5,7 @@
 {% block meta_keywords %}taxi, aeropuerto, reservas, transporte, seguro{% endblock %}
 {% block content %}
 
-<section id="faq" class="faq section" style="margin-top: 100px;">
+<section id="faq" class="faq section" style="margin-top: 150px;">
 
     <div class="container section-title" data-aos="fade-up">
         <span class="subtitle">Tarifas</span>
@@ -48,9 +48,8 @@
     // Se asegura de que el script corre solo cuando el DOM (HTML) está completamente cargado.
     document.addEventListener('DOMContentLoaded', () => {
         
-        // Seleccionamos el contenedor principal estático que envuelve a todas las tarifas.
-        // Este elemento está fuera del bucle FOR, por lo que existe desde el inicio.
-        const faqContainer = document.querySelector('.faq.section .container');
+        // Seleccionamos la sección que envuelve a todas las tarifas; existe desde el inicio.
+        const faqContainer = document.querySelector('#faq');
 
         if (faqContainer) {
             
