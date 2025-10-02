@@ -31,6 +31,7 @@ urlpatterns = [
 
     # Ficha conductor y perfil conductor
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
-    path('perfil-conductor/', lambda request: render(request, 'core/perfilConductor.html'), name='perfil_conductor'),
+    path('perfil-conductor/', views.perfil_conductor_view, name='perfil_conductor'),
+
 
 ]

@@ -15,29 +15,42 @@
 <div class="container" data-aos="fade-up">
     <div class="card">
         <div class="card-header d-flex justify-content-end">
-            <a href="{% url 'form_crear_conductor' %}" class="btn btn-success">
-                <i class="fas fa-plus-circle me-2"></i>Crear Usuarios
-            </a>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearChoferModal">
+                <i class="fas fa-plus-circle me-2"></i>Crear Chofer
+            </button>
         </div>
         <div class="card-body">
+            {% if mensaje_chofer %}
+            <div class="alert {% if chofer_form.errors %}alert-danger{% else %}alert-success{% endif %} mb-4">
+                {{ mensaje_chofer }}
+            </div>
+            {% endif %}
             <div class="table-responsive">
-                <table id="clientsTable" class="table table-striped table-hover">
+                <table id="choferesTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
                             <th>RUT</th>
                             <th>Nombre</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
+                            <th>Vehiculo</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for chofer in choferes %}
                         <tr>
-                            <td>{{ chofer.rut }}</td>
-                            <td>{{ chofer.nombre }}</td>
-                            <td>{{ chofer.telefono }}</td>
-                            <td>{{ chofer.correo }}</td>
+                            <td>{{ chofer.usuario.Rut }}</td>
+                            <td>{{ chofer.usuario.Nombres }} {{ chofer.usuario.Apellidos }}</td>
+                            <td>{{ chofer.Telefono }}</td>
+                            <td>{{ chofer.usuario.Correo }}</td>
+                            <td>
+                                {% if chofer.vehiculo %}
+                                {{ chofer.vehiculo.patente }}
+                                {% else %}
+                                Sin asignar
+                                {% endif %}
+                            </td>
                             <td>
                                 <button class="btn btn-sm btn-secondary text-white" 
                                         data-bs-toggle="modal" 
@@ -79,13 +92,18 @@
 <div class="container" data-aos="fade-up">
     <div class="card">
         <div class="card-header d-flex justify-content-end">
-            <a href="{% url 'form_crear_vehiculo' %}" class="btn btn-success">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearVehiculoModal">
                 <i class="fas fa-plus-circle me-2"></i>Registrar Vehiculos
-            </a>
+            </button>
         </div>
         <div class="card-body">
+            {% if mensaje_vehiculo %}
+            <div class="alert {% if vehiculo_form.errors %}alert-danger{% else %}alert-success{% endif %} mb-4">
+                {{ mensaje_vehiculo }}
+            </div>
+            {% endif %}
             <div class="table-responsive">
-                <table id="clientsTable" class="table table-striped table-hover">
+                <table id="vehiculosTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
                             <th>Marca</th>
@@ -128,6 +146,86 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearChoferModal" tabindex="-1" aria-labelledby="crearChoferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="chofer">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearChoferModalLabel">Registrar nuevo Chofer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    {% if chofer_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ chofer_form.non_field_errors|join:' ' }}
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        {% for field in chofer_form %}
+                        <div class="mb-3 col-md-6">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                            <div class="text-danger small">{{ field.errors|join:' ' }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearVehiculoModal" tabindex="-1" aria-labelledby="crearVehiculoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="vehiculo">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearVehiculoModalLabel">Registrar nuevo Vehiculo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    {% if vehiculo_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ vehiculo_form.non_field_errors|join:' ' }}
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        {% for field in vehiculo_form %}
+                        <div class="mb-3 col-md-6">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                            <div class="text-danger small">{{ field.errors|join:' ' }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -340,17 +438,34 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#clientsTable').DataTable({
+        const dataTableConfig = {
             "language": {
                 "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json"
             },
             "lengthMenu": [5, 10, 25, 50],
             "pageLength": 10
-        });
+        };
+
+        $('#choferesTable').DataTable(dataTableConfig);
+        $('#vehiculosTable').DataTable(dataTableConfig);
 
         // Inicializar tooltips
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     });
+
+    {% if vehiculo_form.errors %}
+    document.addEventListener('DOMContentLoaded', function () {
+        const vehiculoModal = new bootstrap.Modal(document.getElementById('crearVehiculoModal'));
+        vehiculoModal.show();
+    });
+    {% endif %}
+
+    {% if chofer_form.errors %}
+    document.addEventListener('DOMContentLoaded', function () {
+        const choferModal = new bootstrap.Modal(document.getElementById('crearChoferModal'));
+        choferModal.show();
+    });
+    {% endif %}
 </script>
 {% endblock %}
