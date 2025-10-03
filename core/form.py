@@ -249,7 +249,7 @@ class VehiculosForm(forms.ModelForm):
                     'type': 'date'
                 }
             ),
-            'Vencimiento_permiso_circulacion': forms.DateInput(
+            'vencimiento_permiso_circulacion': forms.DateInput(
                 attrs={
                     'class': 'form-control',
                     'type': 'date'

@@ -15,6 +15,7 @@ from datetime import datetime
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.contrib import messages 
 
 # ❌ FUNCIÓN events_json ELIMINADA para revertir la funcionalidad AJAX del calendario.
 # def events_json(request):
@@ -223,8 +224,6 @@ def clientes(request):
 
 #-------------------------------------------------------------------------------------------------------------------------------
 def choferes(request):
-    mensaje_vehiculo = ""
-    mensaje_chofer = ""
     vehiculo_form = VehiculosForm()
     chofer_form = ChoferForm()
     chofer_form.fields['vehiculo'].required = True
@@ -233,42 +232,46 @@ def choferes(request):
         form_type = request.POST.get('form_type')
 
         if form_type == 'vehiculo':
-            vehiculo_form = VehiculosForm(request.POST, request.FILES)
-            if vehiculo_form.is_valid():
+            form_to_handle  = VehiculosForm(request.POST, request.FILES)
+            if form_to_handle.is_valid():
                 try:
-                    vehiculo_form.save()
-                    mensaje_vehiculo = "Vehiculo registrado correctamente."
-                    vehiculo_form = VehiculosForm()
+                    form_to_handle .save()
+                    messages.success(request, "Vehículo registrado correctamente.")
+                    return redirect('choferes') 
                 except IntegrityError:
-                    vehiculo_form.add_error('patente', "Esta patente ya está registrada.")
-                    mensaje_vehiculo = "No se pudo registrar el vehiculo. Revisa la patente ingresada."
+                    messages.error(request, "No se pudo registrar el vehículo. La patente ya está registrada.")
+                    vehiculo_form = form_to_handle # Mantener form con error
             else:
-                mensaje_vehiculo = "Corrige los datos marcados e inténtalo nuevamente."
+                messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
+                vehiculo_form = form_to_handle # Mantener form con error
 
         elif form_type == 'chofer':
-            chofer_form = ChoferForm(request.POST, request.FILES)
-            chofer_form.fields['vehiculo'].required = True
-            if chofer_form.is_valid():
-                try:
-                    chofer_form.save()
-                    mensaje_chofer = "Chofer registrado correctamente."
-                    chofer_form = ChoferForm()
-                    chofer_form.fields['vehiculo'].required = True
-                except IntegrityError:
-                    chofer_form.add_error('usuario', "Este usuario ya está registrado como chofer.")
-                    mensaje_chofer = "No se pudo registrar el chofer. Revisa la información ingresada."
-            else:
-                mensaje_chofer = "Corrige los datos marcados e inténtalo nuevamente."
+            form_to_handle = ChoferForm(request.POST, request.FILES)
+            form_to_handle.fields['vehiculo'].required = True
 
+            if form_to_handle.is_valid():
+                try:
+                    form_to_handle.save()
+                    # APLICAR PRG:
+                    messages.success(request, "Chofer registrado correctamente.")
+                    return redirect('choferes') # <--- REDIRECCIÓN CLAVE
+                except IntegrityError:
+                    messages.error(request, "No se pudo registrar el chofer. El usuario ya está asignado.")
+                    chofer_form = form_to_handle
+            else:
+                messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
+                chofer_form = form_to_handle
+
+    # Lógica GET (se ejecuta para GET y para POST con errores)
     lista_choferes = Conductores.objects.select_related('usuario', 'vehiculo').all()
     Lista_vehiculos = Vehiculos.objects.all()
+    
     contexto = {
         'choferes': lista_choferes,
         'vehiculos': Lista_vehiculos,
-        'vehiculo_form': vehiculo_form,
-        'mensaje_vehiculo': mensaje_vehiculo,
-        'chofer_form': chofer_form,
-        'mensaje_chofer': mensaje_chofer,
+        'vehiculo_form': vehiculo_form, # Contiene el form limpio (GET) o con errores (POST fallido)
+        'chofer_form': chofer_form,   # Contiene el form limpio (GET) o con errores (POST fallido)
+        # ELIMINAR 'mensaje_vehiculo' y 'mensaje_chofer' del contexto
     }
 
     return render(request, 'core/choferesAdministrador.html', contexto)
