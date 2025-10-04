@@ -154,6 +154,17 @@ class ChoferForm(forms.ModelForm):
                     'type': 'tel'
                 }
             ),
+            'Nro_ficha': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Nro de ficha',
+                }
+            ),
+            'img_foto_perfil': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control-file'
+                }
+            ),
             'img_licencia_conducir': forms.ClearableFileInput(
                 attrs={
                     'class': 'form-control-file'
@@ -318,6 +329,7 @@ class ReservasForm(forms.ModelForm):
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
             
+            'estado': forms.Select(attrs={'class': 'form-control'}),
             'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),
             'Confirmacion': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

@@ -14,6 +14,7 @@ urlpatterns = [
     # Sección administrador (protegida con login)
     path('administrador/calendario', views.calendario, name='calendario'),
     path('administrador/choferes', views.choferes, name='choferes'),
+    path('administrador/vehiculo', views.vehiculo, name='vehiculo'),
     path('administrador/form_crearConductor', views.form_crear_conductor, name='form_crear_conductor'),
     path('administrador/form_crearVehiculo', views.form_crear_vehiculo, name='form_crear_vehiculo'),
     path('administrador/clientes', views.clientes, name='clientes'),

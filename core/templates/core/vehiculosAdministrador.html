@@ -3,21 +3,27 @@
 
 {% block title %}Choferes{% endblock %}
 {% block content %}
+
+<!-- Registro de vehiculos --------------------------------------------------------------------------------------------------------->
 <div class="container section-title mt-4" data-aos="fade-up">
     <div class="row">
         <div class="col col-lg-12">
-            <h2>Lista de Conductores</h2>
+            <h2>Lista de Vehiculos</h2>
             <hr>
         </div>
     </div>
 </div>
-
 <div class="container" data-aos="fade-up">
     <div class="card">
         <div class="card-header d-flex justify-content-end">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearChoferModal">
-                <i class="fas fa-plus-circle me-2"></i>Crear Conductor
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearVehiculoModal">
+                <i class="fas fa-plus-circle me-2"></i>Registrar Vehiculos
             </button>
+        </div>
+        <div class="card-header d-flex justify-content-end">
+            <a href="{% url 'form_crear_vehiculo' %}" class="btn btn-success">
+                <i class="fas fa-plus-circle me-2"></i>Crear Vehiculos
+            </a>
         </div>
         <div class="card-body">
             <div class="container mt-4">
@@ -32,31 +38,23 @@
 
             </div>
             <div class="table-responsive">
-                <table id="choferesTable" class="table table-striped table-hover">
+                <table id="vehiculosTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>RUT</th>
-                            <th>Nombre</th>
-                            <th>Teléfono</th>
-                            <th>Correo</th>
-                            <th>Vehiculo</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Año del modelo</th>
+                            <th>Patente</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for chofer in choferes %}
+                        {% for vehiculo in vehiculos %}
                         <tr>
-                            <td>{{ chofer.usuario.Rut }}</td>
-                            <td>{{ chofer.usuario.Nombres }} {{ chofer.usuario.Apellidos }}</td>
-                            <td>{{ chofer.Telefono }}</td>
-                            <td>{{ chofer.usuario.Correo }}</td>
-                            <td>
-                                {% if chofer.vehiculo %}
-                                {{ chofer.vehiculo.patente }}
-                                {% else %}
-                                Sin asignar
-                                {% endif %}
-                            </td>
+                            <td>{{ vehiculo.marca }}</td>
+                            <td>{{ vehiculo.modelo }}</td>
+                            <td>{{ vehiculo.año_modelo }}</td>
+                            <td>{{ vehiculo.patente }}</td>
                             <td>
                                 <button class="btn btn-sm btn-secondary text-white" data-bs-toggle="modal"
                                     data-bs-placement="top" data-bs-title="Ver historial"
@@ -81,24 +79,26 @@
     </div>
 </div>
 
-<div class="modal fade" id="crearChoferModal" tabindex="-1" aria-labelledby="crearChoferModalLabel" aria-hidden="true">
+
+<div class="modal fade" id="crearVehiculoModal" tabindex="-1" aria-labelledby="crearVehiculoModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="hidden" name="form_type" value="chofer">
+                <input type="hidden" name="form_type" value="vehiculo">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="crearChoferModalLabel">Registrar nuevo Chofer</h5>
+                    <h5 class="modal-title" id="crearVehiculoModalLabel">Registrar nuevo Vehiculo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    {% if chofer_form.non_field_errors %}
+                    {% if vehiculo_form.non_field_errors %}
                     <div class="alert alert-danger">
-                        {{ chofer_form.non_field_errors|join:' ' }}
+                        {{ vehiculo_form.non_field_errors|join:' ' }}
                     </div>
                     {% endif %}
                     <div class="row">
-                        {% for field in chofer_form %}
+                        {% for field in vehiculo_form %}
                         <div class="mb-3 col-md-6">
                             <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                             {{ field }}
@@ -157,62 +157,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="vehiculoModal" tabindex="-1" aria-labelledby="vehiculoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="vehiculoModalLabel">Información del Vehículo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="vehiculoMarca" class="form-label">Marca</label>
-                            <input type="text" class="form-control" id="vehiculoMarca" value="Nissan" disabled>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="vehiculoModelo" class="form-label">Modelo</label>
-                            <input type="text" class="form-control" id="vehiculoModelo" value="Versa" disabled>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="vehiculoAnio" class="form-label">Año</label>
-                            <input type="text" class="form-control" id="vehiculoAnio" value="2022" disabled>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="vehiculoPatente" class="form-label">Patente</label>
-                            <input type="text" class="form-control" id="vehiculoPatente" value="ABCD-12" disabled>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="vehiculoColor" class="form-label">Color</label>
-                            <input type="text" class="form-control" id="vehiculoColor" value="Rojo" disabled>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="revTecnica" class="form-label">Revisión Técnica</label>
-                            <input type="text" class="form-control text-success fw-bold" id="revTecnica"
-                                value="Correcta" disabled>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="soapEstado" class="form-label">SOAP</label>
-                            <input type="text" class="form-control text-danger fw-bold" id="soapEstado" value="Vencido"
-                                disabled>
-                        </div>
-                    </div>
-                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -308,11 +252,6 @@
     });
     {% endif %}
 
-    {% if chofer_form.errors %}
-    document.addEventListener('DOMContentLoaded', function () {
-        const choferModal = new bootstrap.Modal(document.getElementById('crearChoferModal'));
-        choferModal.show();
-    });
-    {% endif %}
+    
 </script>
 {% endblock %}
