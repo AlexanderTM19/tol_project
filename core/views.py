@@ -275,6 +275,39 @@ def choferes(request):
     }
 
     return render(request, 'core/choferesAdministrador.html', contexto)
+#-------------------------------------------------------------------------------------------------------------------------------
+def vehiculo(request):
+    """
+    Vista para manejar el registro de nuevos vehículos.
+    """
+    vehiculo_form = VehiculosForm()
+
+    if request.method == 'POST':
+        form_to_handle = VehiculosForm(request.POST, request.FILES)
+        
+        if form_to_handle.is_valid():
+            try:
+                form_to_handle.save()
+                messages.success(request, "Vehículo registrado correctamente.")
+                return redirect('vehiculo')
+            except IntegrityError:
+                # Este error ahora es específico de la patente duplicada (asumiendo unique=True en el modelo)
+                messages.error(request, "No se pudo registrar el vehículo. La patente ya está registrada.")
+                vehiculo_form = form_to_handle # Mantiene el formulario con el error para mostrarlo
+        else:
+            messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
+            vehiculo_form = form_to_handle # Mantiene el formulario con los errores de validación
+
+    # Lógica GET: se ejecuta para el método GET y para POST con errores de validación/IntegrityError
+    Lista_vehiculos = Vehiculos.objects.all()
+    
+    contexto = {
+        'vehiculos': Lista_vehiculos,
+        'vehiculo_form': vehiculo_form,
+    }
+
+    # 🚨 NOTA: Es posible que necesites una plantilla HTML separada para esta vista si ya no es 'choferesAdministrador.html'
+    return render(request, 'core/vehiculosAdministrador.html', contexto)
 
 #-------------------------------------------------------------------------------------------------------------------------------
 @login_required

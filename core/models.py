@@ -54,7 +54,7 @@ class Vehiculos(models.Model):
     marca = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
     año_modelo = models.IntegerField()
-    patente = models.CharField(max_length=10)
+    patente = models.CharField(max_length=10, unique=True)
     color = models.CharField(max_length=30)
     revision_tecnica_vencimiento = models.DateField()
     soap_vencimiento = models.DateField()
@@ -71,12 +71,19 @@ class Vehiculos(models.Model):
 class Conductores(models.Model):
     usuario = models.OneToOneField(Usuarios, on_delete=models.CASCADE, primary_key=True)
     Telefono = models.CharField(max_length=20)
+    Nro_ficha = Nro_ficha = models.IntegerField(
+        null=True, 
+        blank=True, 
+        validators=[MinValueValidator(1)] # Asegura que sea >= 1
+    )
+    img_foto_perfil = models.ImageField(upload_to='Conductores/Foto_perfil/', blank=True, null=True)
     img_licencia_conducir = models.ImageField(upload_to='Conductores/Licencias_conduccion/', blank=True, null=True)
     Vencimiento_licencia_conducir= models.DateField()
     ESTADOS = [
         ('DISPONIBLE', 'Disponible'),
         ('OCUPADO', 'Ocupado'),
         ('INACTIVO', 'Inactivo'),
+        ('SUSPENDIDO', 'suspendido'),
     ]
     estado = models.CharField(max_length=10, choices=ESTADOS, default='INACTIVO')
     Direccion = models.CharField(max_length=50)
@@ -126,6 +133,12 @@ class Reservas(models.Model):
                 MaxValueValidator(2)  # Máximo permitido (si solo quieres un dígito)
         ])
     Confirmacion = models.BooleanField(default=False)
+    ESTADOS = [
+        ('REALIZADO', 'realizado'),
+        ('CANCELADO', 'ocupado'),
+        ('PENDIENTE', 'pendiente'),
+    ]
+    estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
     Chofer_asignado = models.ForeignKey(Conductores, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
