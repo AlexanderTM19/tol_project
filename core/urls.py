@@ -26,9 +26,11 @@ urlpatterns = [
     path('administrador/form_clientes', views.form_clientes, name='form_clientes'),
     path('administrador/form_modpro/<id>',views.form_modpro, name='form_modpro'),
     path('administrador/', views.admin_config, name='admin_config'),
+    path('administrador/estadisticas', views.estadisticas, name='estadisticas'),
     path('administrador/reservas-web/pendientes', views.reservas_web_pendientes, name='reservas_web_pendientes'),
     path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
     path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),
+    path('administrador/reservas/crear', views.crear_reserva_admin, name='crear_reserva_admin'),
 
     # Login y Logout
     path('login/', views.login_view, name='login'),

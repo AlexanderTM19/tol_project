@@ -1,0 +1,343 @@
+{% extends 'core/administrador.html' %}
+{% load static %}
+
+{% block title %}Estadísticas{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card { border: 0; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+  .stat-icon { width: 42px; height: 42px; border-radius: 10px; display:flex; align-items:center; justify-content:center; }
+  .wallet-card { border: 0; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.1); background: linear-gradient(135deg,#111827,#1f2937); color:#fff; }
+  /* Pastel gradient for personal income card */
+  .wallet-card.light {
+    background: linear-gradient(135deg, #c7d2fe, #a7f3d0); /* indigo-200 → emerald-200 */
+    color: #0f172a; /* slate-900 for better contrast on pastel */
+  }
+  .wallet-card.light .subtext { color: #334155; }
+  .filter-select { max-width: 220px; }
+  .stats-controls { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .stats-controls .form-select-sm,
+  .stats-controls .form-control-sm { min-width: 140px; }
+  .stats-controls .w-auto { width:auto !important; }
+  .card-title-small { font-size: .9rem; color:#6b7280; margin-bottom: .25rem; }
+  .value-big { font-size: 1.75rem; font-weight: 700; }
+  .subtext { font-size: .85rem; color:#9ca3af; }
+  .section-header { font-weight:700; font-size:1.25rem; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+  /* Fijar altura de contenedores de gráficos para evitar crecimiento infinito */
+  .chart-box { position: relative; height: 300px; }
+  .chart-box-sm { position: relative; height: 240px; }
+  .chart-box > canvas, .chart-box-sm > canvas { width: 100% !important; height: 100% !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Panel de estadísticas</h2>
+  </div>
+
+  <!-- Top metrics -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-primary-subtle text-primary me-3"><i class="bi bi-check2-all"></i></div>
+          <div>
+            <div class="card-title-small">Servicios realizados</div>
+            <div class="value-big">{{ servicios_realizados }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-warning-subtle text-warning me-3"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="card-title-small">Servicios por realizar</div>
+            <div class="value-big">{{ servicios_por_realizar }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-danger-subtle text-danger me-3"><i class="bi bi-x-circle"></i></div>
+          <div>
+            <div class="card-title-small">Servicios cancelados</div>
+            <div class="value-big">{{ servicios_cancelados }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-success-subtle text-success me-3"><i class="bi bi-person-plus"></i></div>
+          <div>
+            <div class="card-title-small">Clientes nuevos</div>
+            <div class="value-big">{{ clientes_nuevos }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-info-subtle text-info me-3"><i class="bi bi-people"></i></div>
+          <div>
+            <div class="card-title-small">Clientes frecuentes</div>
+            <div class="value-big">{{ clientes_frecuentes }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Sales dynamics / ingresos con filtro -->
+    <div class="col-12 col-lg-8">
+      <div class="card stat-card p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div class="section-header mb-0">Historial de ingresos</div>
+          <div class="stats-controls d-flex align-items-center gap-2">
+            <select id="periodFilter" class="form-select form-select-sm filter-select">
+              <option value="anio" selected>Año</option>
+              <option value="mes">Mes</option>
+              <option value="semana">Semana</option>
+              <option value="dia">Día</option>
+            </select>
+            <div id="periodControls" class="d-flex align-items-center gap-2"></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="incomeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: wallet cards -->
+    <div class="col-12 col-lg-4">
+      <div class="wallet-card p-4 mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="subtext">Total generado por la empresa</div>
+            <div class="value-big"><span class="js-clp" data-amount="{{ total_empresa }}"></span></div>
+          </div>
+          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
+        </div>
+      </div>
+      <div class="wallet-card light p-4">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="subtext">Ingreso personal</div>
+            <div class="value-big"><span class="js-clp" data-amount="{{ ingreso_personal }}"></span></div>
+          </div>
+          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-1">
+    <!-- Doughnut chart: distribución de servicios -->
+    <div class="col-12 col-lg-4">
+      <div class="card stat-card p-3 h-100">
+        <div class="section-header mb-2">Distribución de servicios</div>
+        <div class="chart-box-sm">
+          <canvas id="servicesDonut"></canvas>
+        </div>
+        <div class="mt-3 small">
+          <span class="legend-dot" style="background:#22c55e"></span> Realizados
+          <span class="legend-dot ms-3" style="background:#f59e0b"></span> Por realizar
+          <span class="legend-dot ms-3" style="background:#ef4444"></span> Cancelados
+        </div>
+      </div>
+    </div>
+
+    <!-- Area chart: actividad general -->
+    <div class="col-12 col-lg-8">
+      <div class="card stat-card p-3 h-100">
+        <div class="section-header mb-2">Actividad general</div>
+        <div class="chart-box">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Utilidades para generar datos según periodo
+  function daysInMonth(year, monthIndex) { // monthIndex 0-11
+    return new Date(year, monthIndex + 1, 0).getDate();
+  }
+  function range(n){ return Array.from({length:n}, (_,i)=>i+1); }
+
+  const ctxIncome = document.getElementById('incomeChart');
+  const ctxDonut = document.getElementById('servicesDonut');
+  const ctxActivity = document.getElementById('activityChart');
+
+  const primary = '#0ea5e9', secondary = '#6366f1';
+
+  // Formateador CLP
+  const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+
+  // Income line chart with gradient
+  const incomeChart = new Chart(ctxIncome, {
+    type: 'bar',
+    data: {
+      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      datasets: [{
+        label: 'Ingresos (CLP - miles)',
+        data: [12,18,15,22,27,30,35,42,39,31,28,25],
+        backgroundColor: 'rgba(14,165,233,0.25)',
+        borderColor: primary,
+        borderWidth: 2,
+        tension: .3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${fmtCLP(ctx.raw * 1000)}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          grid: { color: 'rgba(0,0,0,.05)' }, beginAtZero: true,
+          title: { display: true, text: 'CLP (miles)' },
+          ticks: {
+            callback: (val) => fmtCLP(val * 1000)
+          }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Controles dinámicos de periodo
+  const periodControls = document.getElementById('periodControls');
+  const periodFilter = document.getElementById('periodFilter');
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear-2, currentYear-1, currentYear, currentYear+1];
+
+  function updateIncome(period, params){
+    let labels = [], data = [];
+    if(period === 'anio'){
+      labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      data = labels.map(()=>Math.floor(10+Math.random()*35));
+    } else if(period === 'mes'){
+      const y = parseInt(params.year, 10);
+      const m = parseInt(params.month, 10) - 1; // 0-11
+      const dim = daysInMonth(y, m);
+      labels = range(dim).map(String);
+      data = range(dim).map(()=>Math.floor(5+Math.random()*20));
+    } else if(period === 'semana'){
+      labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+      data = [14,17,19,15,22,26,20].map(v=>v + Math.floor(Math.random()*4)-2);
+    } else if(period === 'dia'){
+      labels = Array.from({length: 24}, (_,i)=>`${i}:00`);
+      data = Array.from({length:24},()=>Math.floor(4+Math.random()*8));
+    }
+    incomeChart.data.labels = labels;
+    incomeChart.data.datasets[0].data = data;
+    incomeChart.update();
+  }
+
+  function renderControls(period){
+    let html = '';
+    if(period === 'anio'){
+      html = `<select id="ctrlYear" class="form-select form-select-sm w-auto flex-shrink-0">${years.map(y=>`<option value="${y}" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`;
+      periodControls.innerHTML = html;
+      document.getElementById('ctrlYear').addEventListener('change', ()=>{
+        updateIncome('anio', {year: document.getElementById('ctrlYear').value});
+      });
+      updateIncome('anio', {year: currentYear});
+    } else if(period === 'mes'){
+      html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
+             `<select id=\"ctrlMonth\" class=\"form-select form-select-sm w-auto flex-shrink-0\"><option value=\"1\">Enero</option><option value=\"2\">Febrero</option><option value=\"3\">Marzo</option><option value=\"4\">Abril</option><option value=\"5\">Mayo</option><option value=\"6\">Junio</option><option value=\"7\">Julio</option><option value=\"8\">Agosto</option><option value=\"9\">Septiembre</option><option value=\"10\">Octubre</option><option value=\"11\">Noviembre</option><option value=\"12\">Diciembre</option></select>`;
+      periodControls.innerHTML = html;
+      const apply = ()=> updateIncome('mes', {year: document.getElementById('ctrlYear').value, month: document.getElementById('ctrlMonth').value});
+      document.getElementById('ctrlYear').addEventListener('change', apply);
+      document.getElementById('ctrlMonth').addEventListener('change', apply);
+      apply();
+    } else if(period === 'semana'){
+      html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
+             `<select id=\"ctrlWeek\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${range(52).map(w=>`<option value=\"${w}\">Semana ${w}</option>`).join('')}</select>`;
+      periodControls.innerHTML = html;
+      const apply = ()=> updateIncome('semana', {year: document.getElementById('ctrlYear').value, week: document.getElementById('ctrlWeek').value});
+      document.getElementById('ctrlYear').addEventListener('change', apply);
+      document.getElementById('ctrlWeek').addEventListener('change', apply);
+      apply();
+    } else if(period === 'dia'){
+      const today = new Date().toISOString().slice(0,10);
+      html = `<input id=\"ctrlDate\" type=\"date\" class=\"form-control form-control-sm w-auto flex-shrink-0\" value=\"${today}\" />`;
+      periodControls.innerHTML = html;
+      const apply = ()=> updateIncome('dia', {date: document.getElementById('ctrlDate').value});
+      document.getElementById('ctrlDate').addEventListener('change', apply);
+      apply();
+    }
+  }
+
+  periodFilter.addEventListener('change', (e)=> renderControls(e.target.value));
+  renderControls(periodFilter.value);
+
+  // Formateo de montos en billeteras a CLP
+  document.querySelectorAll('.js-clp').forEach(el => {
+    const val = parseFloat(el.dataset.amount || 0);
+    el.textContent = fmtCLP(val);
+  });
+
+  // Donut chart for service distribution
+  new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+      labels: ['Realizados','Por realizar','Cancelados'],
+      datasets: [{
+        data: [{{ servicios_realizados }}, {{ servicios_por_realizar }}, {{ servicios_cancelados }}],
+        backgroundColor: ['#22c55e','#f59e0b','#ef4444']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      cutout: '70%'
+    }
+  });
+
+  // Area chart for overall activity
+  new Chart(ctxActivity, {
+    type: 'line',
+    data: {
+      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      datasets: [{
+        label: 'Actividad',
+        data: [5,9,7,12,15,18,21,25,23,19,13,10],
+        fill: true,
+        backgroundColor: 'rgba(99,102,241,0.18)',
+        borderColor: secondary,
+        tension: .35,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)'} }, x: { grid:{ display:false } } }
+    }
+  });
+</script>
+{% endblock %}

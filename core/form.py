@@ -383,7 +383,13 @@ class TarifasForm(forms.ModelForm):
 class ReservasForm(forms.ModelForm):
     class Meta:
         model = Reservas
-        fields = '__all__' 
+        # Excluimos 'estado' para usar el valor por defecto desde la vista
+        fields = [
+            'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo',
+            'Origen', 'Destino', 'Dirrecion', 'Fecha', 'Hora',
+            'Cantidad_pasajeros', 'Cantidad_maletas', 'Confirmacion',
+            'Chofer_asignado'
+        ]
         widgets = {
             'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'}),
             'Apellidos_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tus apellidos'}),
@@ -404,8 +410,6 @@ class ReservasForm(forms.ModelForm):
             # El validador del modelo se encargará de limitar el rango.
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
-            
-            'estado': forms.Select(attrs={'class': 'form-control'}),
             'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),
             'Confirmacion': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

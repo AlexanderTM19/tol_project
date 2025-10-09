@@ -312,40 +312,53 @@
         calendar.render();
 
         // =========================================================================
-        // LÓGICA DE ENVÍO DEL FORMULARIO DE RESERVA MANUAL
+        // LÓGICA DE ENVÍO DEL FORMULARIO (AJAX) PARA GARANTIZAR GUARDADO Y REFRESCO DEL CALENDARIO
         // =========================================================================
 
         const formCrearEvento = document.getElementById('formCrearEvento');
-        // Obtener la instancia del modal para poder cerrarlo después del envío
         const crearEventoModalEl = document.getElementById('crearEventoModal');
         const crearEventoModal = new bootstrap.Modal(crearEventoModalEl);
 
-
-        formCrearEvento.addEventListener('submit', function (event) {
-            // Ya que hemos revertido la vista admin_config para usar POST tradicional,
-            // debemos eliminar la lógica AJAX de este listener.
-
-            // Si el formulario se envía de forma tradicional (sin event.preventDefault() y fetch):
-            // 1. El navegador hace un POST a '{% url 'admin_config' %}'
-            // 2. Django guarda la reserva y hace un redirect('admin_config')
-            // 3. El navegador recarga la página completamente.
-
-            // Para volver al flujo tradicional, eliminaremos la lógica AJAX.
-
-            // ❌ ELIMINAR O COMENTAR LA LÓGICA AJAX:
-            /*
-            event.preventDefault(); 
+        formCrearEvento.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const url = '{% url 'crear_reserva_admin' %}';
             const formData = new FormData(formCrearEvento);
-            const formUrl = formCrearEvento.getAttribute('action');
-            // ... (resto de la lógica fetch y manejo de JSON)
-            */
-           
-           // Si deseas que el formulario envíe de forma tradicional, SOLO DEJA ESTA LÍNEA DE CÓDIGO COMENTADA:
-           // **event.preventDefault()**
-           
-           // Si dejas el evento.preventDefault() comentado (como está aquí),
-           // el formulario se enviará de forma tradicional (POST y recarga de página).
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value },
+                    body: formData
+                });
+
+                if (!resp.ok) {
+                    const dataErr = await resp.json();
+                    mostrarErroresFormulario(dataErr.errores || {});
+                    return;
+                }
+
+                const data = await resp.json();
+                if (data.exito) {
+                    // Agregar evento al calendario sin recargar
+                    if (data.evento) { calendar.addEvent(data.evento); }
+                    formCrearEvento.reset();
+                    crearEventoModal.hide();
+                } else {
+                    mostrarErroresFormulario(data.errores || {});
+                }
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo guardar la reserva.');
+            }
         });
+
+        function mostrarErroresFormulario(errores) {
+            // Limpia errores previos simples (opcional: podrías mostrarlos bajo cada campo)
+            // Aquí mostramos una alerta básica si hay errores no de campo.
+            if (errores.__all__) {
+                alert(errores.__all__.join('\n'));
+            }
+        }
 
         // -------------------------------------------------------------------------
         // NOTA IMPORTANTE:
