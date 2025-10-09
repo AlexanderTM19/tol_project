@@ -1,6 +1,6 @@
 # En tu archivo core/forms.py
 from django import forms
-from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb
+from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Trasporte, Tarifas, Reservas, ReservasWeb
 from django.core.validators import MinValueValidator, MaxValueValidator 
 
 
@@ -216,8 +216,84 @@ class ChoferForm(forms.ModelForm):
 class VehiculosForm(forms.ModelForm):
     class Meta:
         model = Vehiculos
+        exclude = ('id_vehiculo',) # Excluye el campo id_vehiculo
+        widgets = {
+            'marca': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Ej. Nissan'
+                }
+            ),
+            'modelo': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Ej. X-Trail'
+                }
+            ),
+            'año_modelo': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Ej. 2023'
+                }
+            ),
+            'patente': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Ej. ABCD-12'
+                }
+            ),
+            'color': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Ej. Blanco'
+                }
+            ),
+            'revision_tecnica_vencimiento': forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
+            'soap_vencimiento': forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
+            'vencimiento_permiso_circulacion': forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
+            'img_revision': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control-file'
+                }
+            ),
+            'img_soap': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control-file'
+                }
+            ),
+            'img_permiso_circulacion': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control-file'
+                }
+            ),
+        }
+        
+#-------------------------------------------------------------------------------------------------------------------------------
+class TrasporteForm(forms.ModelForm):
+    class Meta:
+        model = Trasporte 
         fields = "__all__"
         widgets = {
+            'tipo_transporte': forms.Select(
+                attrs={
+                    'class': 'form-control'
+                }
+            ),
             'marca': forms.TextInput(
                 attrs={
                     'class': 'form-control',
