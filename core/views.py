@@ -5,8 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm
-from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm,TrasporteForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb,Trasporte
 import random
 import json
 from django.http import JsonResponse
@@ -223,55 +223,61 @@ def clientes(request):
     return render(request, 'core/clientesAdministrador.html', {"clientes": Listado_clientes})
 
 #-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
 def choferes(request):
-    vehiculo_form = VehiculosForm()
+    # 1. Inicialización del formulario para el contexto GET/Error
     chofer_form = ChoferForm()
+    # Aseguramos que el campo 'vehiculo' sea requerido al inicializar
     chofer_form.fields['vehiculo'].required = True
-
-    if request.method == 'POST':
-        form_type = request.POST.get('form_type')
-
-        if form_type == 'vehiculo':
-            form_to_handle  = VehiculosForm(request.POST, request.FILES)
-            if form_to_handle.is_valid():
-                try:
-                    form_to_handle .save()
-                    messages.success(request, "Vehículo registrado correctamente.")
-                    return redirect('choferes') 
-                except IntegrityError:
-                    messages.error(request, "No se pudo registrar el vehículo. La patente ya está registrada.")
-                    vehiculo_form = form_to_handle # Mantener form con error
-            else:
-                messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
-                vehiculo_form = form_to_handle # Mantener form con error
-
-        elif form_type == 'chofer':
-            form_to_handle = ChoferForm(request.POST, request.FILES)
-            form_to_handle.fields['vehiculo'].required = True
-
-            if form_to_handle.is_valid():
-                try:
-                    form_to_handle.save()
-                    # APLICAR PRG:
-                    messages.success(request, "Chofer registrado correctamente.")
-                    return redirect('choferes') # <--- REDIRECCIÓN CLAVE
-                except IntegrityError:
-                    messages.error(request, "No se pudo registrar el chofer. El usuario ya está asignado.")
-                    chofer_form = form_to_handle
-            else:
-                messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
-                chofer_form = form_to_handle
-
-    # Lógica GET (se ejecuta para GET y para POST con errores)
-    lista_choferes = Conductores.objects.select_related('usuario', 'vehiculo').all()
-    Lista_vehiculos = Vehiculos.objects.all()
     
+    # --- Lógica de Manejo de Solicitud POST ---
+    if request.method == 'POST':
+        # Instanciar el formulario con los datos POST
+        chofer_form_to_handle = ChoferForm(request.POST, request.FILES)
+        chofer_form_to_handle.fields['vehiculo'].required = True # Reafirmar required
+        
+        if chofer_form_to_handle.is_valid():
+            try:
+                # Guardar el objeto en la base de datos
+                chofer_form_to_handle.save()
+                
+                # APLICAR PRG (Post-Redirect-Get): Redirección exitosa
+                messages.success(request, "Chofer registrado correctamente.")
+                return redirect('choferes')
+            
+            except IntegrityError:
+                # Error de integridad (ej: DNI/RUT/Usuario ya existe)
+                messages.error(request, "No se pudo registrar el chofer. El DNI/RUT/Usuario ya está asignado.")
+                # El formulario con errores se pasa al contexto
+                chofer_form = chofer_form_to_handle 
+            
+            except Exception:
+                # Capturar cualquier otro error inesperado
+                messages.error(request, "Error inesperado al registrar el chofer. Contacta a soporte.")
+                chofer_form = chofer_form_to_handle
+        
+        else:
+            # El formulario NO es válido (errores de validación de campos)
+            messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
+            chofer_form = chofer_form_to_handle
+            
+        # Si hubo un POST con error, el flujo continúa a la sección final para renderizar la página con errores.
+        
+    # --- Lógica GET (se ejecuta para GET y para POST con errores) ---
+    
+    # Obtener lista de choferes (asumo que 'Conductores' es tu modelo)
+    # select_related mejora la eficiencia al obtener datos relacionados
+    try:
+        lista_choferes = Conductores.objects.select_related('usuario', 'vehiculo').all()
+    except NameError:
+        # En caso de que el modelo Conductores no esté definido/importado
+        lista_choferes = [] 
+        
     contexto = {
         'choferes': lista_choferes,
-        'vehiculos': Lista_vehiculos,
-        'vehiculo_form': vehiculo_form, # Contiene el form limpio (GET) o con errores (POST fallido)
-        'chofer_form': chofer_form,   # Contiene el form limpio (GET) o con errores (POST fallido)
-        # ELIMINAR 'mensaje_vehiculo' y 'mensaje_chofer' del contexto
+        # Contiene el form limpio (GET) o con errores y datos ingresados (POST fallido)
+        'chofer_form': chofer_form, 
     }
 
     return render(request, 'core/choferesAdministrador.html', contexto)
@@ -280,33 +286,33 @@ def vehiculo(request):
     """
     Vista para manejar el registro de nuevos vehículos.
     """
-    vehiculo_form = VehiculosForm()
+    vehiculo_form = TrasporteForm()
 
     if request.method == 'POST':
-        form_to_handle = VehiculosForm(request.POST, request.FILES)
+        form_to_handle = TrasporteForm(request.POST, request.FILES)
         
         if form_to_handle.is_valid():
             try:
                 form_to_handle.save()
                 messages.success(request, "Vehículo registrado correctamente.")
                 return redirect('vehiculo')
-            except IntegrityError:
-                # Este error ahora es específico de la patente duplicada (asumiendo unique=True en el modelo)
-                messages.error(request, "No se pudo registrar el vehículo. La patente ya está registrada.")
+            except IntegrityError as e:
+            # 'e' ahora contiene el objeto de la excepción IntegrityError
+            # str(e) convierte ese objeto en su representación de cadena (el mensaje del error).
+                messages.error(request, f"No se pudo registrar el vehículo. Error técnico: {e}")
                 vehiculo_form = form_to_handle # Mantiene el formulario con el error para mostrarlo
         else:
             messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
             vehiculo_form = form_to_handle # Mantiene el formulario con los errores de validación
 
     # Lógica GET: se ejecuta para el método GET y para POST con errores de validación/IntegrityError
-    Lista_vehiculos = Vehiculos.objects.all()
+    Lista_vehiculos = Trasporte.objects.all()
     
     contexto = {
         'vehiculos': Lista_vehiculos,
         'vehiculo_form': vehiculo_form,
     }
 
-    # 🚨 NOTA: Es posible que necesites una plantilla HTML separada para esta vista si ya no es 'choferesAdministrador.html'
     return render(request, 'core/vehiculosAdministrador.html', contexto)
 
 #-------------------------------------------------------------------------------------------------------------------------------

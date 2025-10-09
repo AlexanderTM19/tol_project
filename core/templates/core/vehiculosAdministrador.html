@@ -1,10 +1,10 @@
 {% extends 'core/administrador.html' %}
 {% load static %}
 
-{% block title %}Choferes{% endblock %}
+{% block title %}Vehiculos{% endblock %}
 {% block content %}
 
-<!-- Registro de vehiculos --------------------------------------------------------------------------------------------------------->
+<!-- Vehiculos -->
 <div class="container section-title mt-4" data-aos="fade-up">
     <div class="row">
         <div class="col col-lg-12">
@@ -41,6 +41,7 @@
                 <table id="vehiculosTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
+                            <th>Tipo transporte</th>
                             <th>Marca</th>
                             <th>Modelo</th>
                             <th>Año del modelo</th>
@@ -51,6 +52,7 @@
                     <tbody>
                         {% for vehiculo in vehiculos %}
                         <tr>
+                            <td>{{ vehiculo.tipo_transporte }}</td>
                             <td>{{ vehiculo.marca }}</td>
                             <td>{{ vehiculo.modelo }}</td>
                             <td>{{ vehiculo.año_modelo }}</td>

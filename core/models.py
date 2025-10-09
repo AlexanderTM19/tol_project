@@ -49,6 +49,32 @@ class Usuarios(models.Model):
     
 #----------------------------------------------------------------------------------------------------------------------------------
 #Modelo de los vehiculos
+class Trasporte(models.Model):
+    id_trasporte = models.AutoField(primary_key=True)
+    Tipos_trasportes = [
+        ('SEDAN','sedan'),
+        ('VAN', 'van'),
+        ('SUV', 'suv'),
+        ('LUXURY', 'luxury'),
+    ]
+    tipo_transporte = models.CharField(max_length=10, choices=Tipos_trasportes, default='SEDAN')
+    marca = models.CharField(max_length=50)
+    modelo = models.CharField(max_length=50)
+    año_modelo = models.IntegerField()
+    patente = models.CharField(max_length=10, unique=True)
+    color = models.CharField(max_length=30)
+    revision_tecnica_vencimiento = models.DateField()
+    soap_vencimiento = models.DateField()
+    vencimiento_permiso_circulacion = models.DateField()
+    img_revision = models.ImageField(upload_to='Vehiculos/Revisiones/', blank=True, null=True)
+    img_soap = models.ImageField(upload_to='Vehiculos/Soaps/', blank=True, null=True)
+    img_permiso_circulacion = models.ImageField(upload_to='Vehiculos/Permisos_circulacion/', blank=True, null=True)
+
+    def __str__(self):
+        return f'Trasporte tipo:{self.tipo_transporte} marca:{self.marca} modelo: {self.modelo} patente:({self.patente})'
+        
+#----------------------------------------------------------------------------------------------------------------------------------
+#Modelo de los vehiculos
 class Vehiculos(models.Model):
     id_vehiculo = models.AutoField(primary_key=True)
     marca = models.CharField(max_length=50)
@@ -92,7 +118,7 @@ class Conductores(models.Model):
     # Contador para el número de viajes
     total_viajes_realizados = models.IntegerField(default=0)
     # Un conductor puede estar asignado a un vehículo (ForeignKey).
-    vehiculo = models.ForeignKey(Vehiculos, on_delete=models.SET_NULL, null=True, blank=True)
+    vehiculo = models.ForeignKey(Trasporte, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f'{self.usuario.Nombres} {self.usuario.Apellidos}'
