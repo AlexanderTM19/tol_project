@@ -43,15 +43,22 @@
                             <td>{{ Tarifa.Nombre_Comuna }}</td>
                             <td>${{ Tarifa.Valor | floatformat:0 }}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-secondary text-white disabled" disabled
-                                    tabindex="-1">
+                                <button type="button" class="btn btn-sm btn-secondary text-white disabled" data-bs-toggle="modal" 
+                                    data-bs-placement="top" data-bs-title="Modificar Tarifa"
+                                    data-bs-target="#ModificarTarifaModal">
                                     <i class="bi bi-highlighter"></i>
+
                                 </button>
 
-                                <button type="button" class="btn btn-sm btn-danger text-white disabled" disabled
-                                    tabindex="-1">
-                                    <i class="bi bi-x-square"></i>
-                                </button>
+                                <a href="{% url 'delete_Tarifa' Tarifa.id_tarifa %}" 
+                                    class="btn btn-sm btn-danger text-white " 
+                                    tabindex="-1" 
+                                    role="button" 
+                                    aria-disabled="true"
+                                    title="Eliminar Tarifa"> 
+                                        <i class="bi bi-x-square"></i>
+                                </a>
+                                
                             </td>
                         </tr>
                         {% endfor %}
@@ -94,6 +101,7 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_css %}

@@ -20,11 +20,13 @@
                 <i class="fas fa-plus-circle me-2"></i>Registrar Vehiculos
             </button>
         </div>
-        <div class="card-header d-flex justify-content-end">
+        <!--
+            <div class="card-header d-flex justify-content-end">
             <a href="{% url 'form_crear_vehiculo' %}" class="btn btn-success">
                 <i class="fas fa-plus-circle me-2"></i>Crear Vehiculos
             </a>
         </div>
+    -->
         <div class="card-body">
             <div class="container mt-4">
                 {% if messages %}
@@ -122,6 +124,63 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="vehiculoModal" tabindex="-1" aria-labelledby="vehiculoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vehiculoModalLabel">Información del Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoMarca" class="form-label">Marca</label>
+                            <input type="text" class="form-control" id="vehiculoMarca" value="Nissan" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoModelo" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="vehiculoModelo" value="Versa" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoAnio" class="form-label">Año</label>
+                            <input type="text" class="form-control" id="vehiculoAnio" value="2022" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoPatente" class="form-label">Patente</label>
+                            <input type="text" class="form-control" id="vehiculoPatente" value="ABCD-12" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculoColor" class="form-label">Color</label>
+                            <input type="text" class="form-control" id="vehiculoColor" value="Rojo" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="revTecnica" class="form-label">Revisión Técnica</label>
+                            <input type="text" class="form-control text-success fw-bold" id="revTecnica"
+                                value="Correcta" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="soapEstado" class="form-label">SOAP</label>
+                            <input type="text" class="form-control text-danger fw-bold" id="soapEstado" value="Vencido"
+                                disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">

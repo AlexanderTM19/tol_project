@@ -419,7 +419,18 @@ def vista_tarifas_admin(request):
     
     return render(request, 'core/tarifasAdministrador.html', contexto)
 
+
 #-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
+def delete_Tarifa(request, id):
+    tarifa_eliminar = Tarifas.objects.get(id_tarifa=id)
+    tarifa_eliminar.delete()
+    return redirect(to="vista_tarifas_admin")
+
+#-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
 def form_mod_tarifa(request, id):
     Tarifas_existentes = Tarifas.objects.get(id_tarifa=id)
     mensaje=""

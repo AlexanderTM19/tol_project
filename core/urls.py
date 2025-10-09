@@ -1,7 +1,7 @@
 # core/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views
+from . import views 
 from django.shortcuts import render
 
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path('administrador/clientes', views.clientes, name='clientes'),
     path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'), 
     path('administrador/vista_tarifas_admin', views.vista_tarifas_admin, name='vista_tarifas_admin'),
+    path('delete_Tarifa/<id>',views.delete_Tarifa,name='delete_Tarifa'), 
     path('administrador/form_crear_usuarios', views.form_crear_usuarios, name='form_crear_usuarios'),
     path('administrador/form_modUser/<id>',views.form_mod_usu, name='form_mod_usu'),
     path('administrador/form_Rol', views.form_Rol, name='form_Rol'),
