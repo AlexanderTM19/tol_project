@@ -225,6 +225,23 @@ def clientes(request):
 #-------------------------------------------------------------------------------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
+def estadisticas(request):
+    # Datos dummy para tarjetas
+    contexto = {
+        'servicios_realizados': 201,
+        'servicios_por_realizar': 87,
+        'servicios_cancelados': 12,
+        'clientes_nuevos': 49,
+        'clientes_frecuentes': 178,
+        # Totales por defecto: empresa > personal
+        'total_empresa': 5025623,
+        'ingreso_personal': 1056277,
+    }
+    return render(request, 'core/estadisticas.html', contexto)
+
+#-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
 def choferes(request):
     # 1. Inicialización del formulario para el contexto GET/Error
     chofer_form = ChoferForm()
@@ -573,6 +590,8 @@ def admin_config(request):
         if form.is_valid():
             # El formulario es válido, guardar la reserva
             reserva_nueva = form.save(commit=False)
+            if not reserva_nueva.estado:
+                reserva_nueva.estado = 'PENDIENTE'
             
             # NOTA: Aquí puedes asignar campos que no están en el formulario (si es necesario)
             # reserva_nueva.Confirmacion = True # Ejemplo
@@ -611,6 +630,41 @@ def admin_config(request):
     }
     
     return render(request, 'core/reservasAdministrador.html', contexto)
+
+
+@login_required
+@user_passes_test(es_admin)
+@require_POST
+def crear_reserva_admin(request):
+    form = ReservasForm(request.POST)
+    if form.is_valid():
+        reserva = form.save(commit=False)
+        if not reserva.estado:
+            reserva.estado = 'PENDIENTE'
+        reserva.save()
+        # Construir payload de evento para FullCalendar
+        chofer_nombre = 'Sin asignar'
+        if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
+            u = reserva.Chofer_asignado.usuario
+            chofer_nombre = f"{u.Nombres} {u.Apellidos}".strip()
+
+        evento = {
+            'id': str(reserva.Id_reserva),
+            'title': f"Reserva - {reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
+            'start': datetime.combine(reserva.Fecha, reserva.Hora).isoformat(),
+            'extendedProps': {
+                'clienteNombre': f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
+                'clienteTelefono': reserva.Telefono,
+                'clienteCorreo': reserva.Correo or '',
+                'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
+                'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
+                'chofer': chofer_nombre,
+            }
+        }
+        return JsonResponse({'exito': True, 'evento': evento})
+
+    # Serializar errores de formulario de manera simple
+    return JsonResponse({'exito': False, 'errores': form.errors}, status=400)
 
 
 @require_POST
