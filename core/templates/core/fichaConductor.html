@@ -201,11 +201,30 @@
 				<div class="card card-custom">
 					<div class="card-body">
 						<div class="card-title mb-2">Conductor que realiza último servicio</div>
-						<div class="card-text">
-							<strong>N° Conductor:</strong> 41<br>
-							<strong>Nombre:</strong> Felipe Aravena<br>
-							<strong>Fecha y Hora última Servicio:</strong> 06-09-2025 | 20:00
-						</div>
+						
+						{% if ultimo_conductor_servicio and ultima_reserva_realizada %}
+							<div class="card-text">
+								
+								<strong>N° Conductor:</strong> 
+								<span class="fw-bold">{{ ultimo_conductor_servicio.Nro_ficha }}</span>
+								<br>
+								
+								<strong>Nombre:</strong> 
+								{{ ultimo_conductor_servicio.usuario.Nombres }} {{ ultimo_conductor_servicio.usuario.Apellidos }}
+								<br>
+								
+								<strong>Fecha y Hora última Servicio:</strong> 
+								{{ ultima_reserva_realizada.Fecha|date:"d-m-Y" }} | {{ ultima_reserva_realizada.Hora|time:"H:i" }}
+							</div>
+						{% else %}
+							<div class="card-text text-muted small text-center p-4">
+								<i class="fas fa-exclamation-circle mb-2" style="font-size: 1.5rem;"></i>
+								<p class="mb-0 text-wrap w-100">
+									No hay servicios finalizados recientemente para mostrar.
+								</p>
+							</div>
+						{% endif %}
+						
 					</div>
 				</div>
 				<div class="card card-custom">
@@ -238,16 +257,20 @@
 				<div class="mb-2 text-center fw-bold" style="font-size:1.2rem; color:#2a5298;">Fichero de Conductores
 				</div>
 				<div class="d-flex flex-wrap justify-content-center align-items-center scrollable-x mb-2">
-					{% for n in conductores %}
-					<span class="circle-badge blue" title="Conductor {{n}}">{{n}}</span>
+					{% for n in Lista_conductores %}
+						{% if n.estado == 'DISPONIBLE' %}
+							<span class="circle-badge blue" title="Conductor {{n}}">{{ n.Nro_ficha }}</span>
+						{%endif%}
 					{% endfor %}
 				</div>
 				<hr>
 				<div class="mb-2 text-center fw-bold" style="font-size:1.1rem; color:#ff416c;">Conductores Suspendidos
 				</div>
 				<div class="d-flex flex-wrap justify-content-center align-items-center scrollable-x">
-					{% for n in suspendidos %}
-					<span class="circle-badge red" title="Suspendido {{n}}">{{n}}</span>
+					{% for n in Lista_conductores %}
+						{% if n.estado == 'SUSPENDIDO' %}
+							<span class="circle-badge red" title="Suspendido {{n}}">{{ n.Nro_ficha }}</span>
+						{%endif%}
 					{% endfor %}
 				</div>
 			</div>
@@ -263,36 +286,44 @@
 						<thead>
 							<tr>
 								<th style="color:#2a5298;">N° Ficha</th>
-								<th style="color:#2a5298;">Nombre</th>
-								<th style="color:#2a5298;">Apellido</th>
+								<th style="color:#2a5298;">Usuario</th>
 								<th style="color:#2a5298;">Cantidad de servicios</th>
 								<th style="color:#2a5298;">Activo?</th>
 							</tr>
 						</thead>
 						<tbody id="tabla-conductores-body">
-							{% for conductor in grilla_conductores %}
+							{% for conductor in Lista_conductores %}
 							<tr class="conductores-row" style="display: none;">
 								<td>
-									{% if not conductor.activo %}
-										<span class="badge bg-danger" style="font-size:1rem;">{{ conductor.numero }}</span>
+									{% if conductor.estado == 'DISPONIBLE' %}
+										<span class="circle-badge bg-success" style="font-size:1rem;">{{ conductor.Nro_ficha }}</span>
+										
+									{% elif conductor.estado == 'OCUPADO' %}
+										<span class="circle-badge bg-primary" style="font-size:1rem;">{{ conductor.Nro_ficha }}</span>
+										
+									{% elif conductor.estado == 'INACTIVO' or conductor.estado == 'SUSPENDIDO' %}
+										<span class="circle-badge bg-danger" style="font-size:1rem;">{{ conductor.Nro_ficha }}</span>
+										
 									{% else %}
-										<span class="badge bg-primary" style="font-size:1rem;">{{ conductor.numero }}</span>
+										<span class="circle-badge bg-secondary" style="font-size:1rem;">{{ conductor.Nro_ficha }}</span>
+										
 									{% endif %}
 								</td>
-								<td>{{ conductor.nombre }}</td>
-								<td>{{ conductor.apellido }}</td>
-								<td><span class="badge bg-info text-dark" style="font-size:1rem;">{{ conductor.servicios }}</span></td>
-								<td class="text-center">
-									{% if conductor.activo %}
-										<span title="Activo" style="color: #28a745; font-size:1.3rem;"><i class="bi bi-check-circle-fill"></i></span>
-									{% else %}
-										<span title="Suspendido" style="color: #dc3545; font-size:1.3rem;"><i class="bi bi-x-circle-fill"></i></span>
-									{% endif %}
+								<td>{{ conductor.usuario.Nombres }}  {{ conductor.usuario.Apellidos }}</td>
+                            	<td>
+									<span class="badge bg-info text-dark" style="font-size:1rem;">
+										{{ conductor.total_viajes_realizados }}
+									</span>
 								</td>
-							</tr>
-							{% empty %}
-							<tr>
-								<td colspan="5" class="text-center text-muted">No hay datos de conductores.</td>
+								<td>
+									{{ conductor.get_estado_display }}
+								</td>
+								
+								{% empty %}
+								<tr>
+									<td colspan="5" class="text-center text-muted">No hay datos de conductores.</td>
+								</tr>
+								
 							</tr>
 							{% endfor %}
 						</tbody>
