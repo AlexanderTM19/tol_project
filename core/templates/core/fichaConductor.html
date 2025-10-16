@@ -230,21 +230,29 @@
 				<div class="card card-custom">
 					<div class="card-body">
 						<div class="card-title mb-2">Conductor que lleva más servicios</div>
+						{% if conductor_mas_servicios %}
 						<div class="card-text">
-							<strong>N°:</strong> 5<br>
-							<strong>Nombre de usuario:</strong> René González<br>
-							<strong>Cantidad de servicios:</strong> 159
+							<strong>N°:</strong> {{ conductor_mas_servicios.Nro_ficha|default:"-" }}<br>
+							<strong>Nombre de usuario:</strong> {{ conductor_mas_servicios.usuario.Nombres }} {{ conductor_mas_servicios.usuario.Apellidos }}<br>
+							<strong>Cantidad de servicios:</strong> {{ conductor_mas_servicios.servicios_realizados|default:0 }}
 						</div>
+						{% else %}
+						<div class="card-text text-muted">No hay datos disponibles.</div>
+						{% endif %}
 					</div>
 				</div>
 				<div class="card card-custom">
 					<div class="card-body">
 						<div class="card-title mb-2">Conductor que lleva menos servicios</div>
+						{% if conductor_menos_servicios %}
 						<div class="card-text">
-							<strong>N°:</strong> 44<br>
-							<strong>Nombre de usuario:</strong> Gaby Patricia<br>
-							<strong>Cantidad de servicios:</strong> 2
+							<strong>N°:</strong> {{ conductor_menos_servicios.Nro_ficha|default:"-" }}<br>
+							<strong>Nombre de usuario:</strong> {{ conductor_menos_servicios.usuario.Nombres }} {{ conductor_menos_servicios.usuario.Apellidos }}<br>
+							<strong>Cantidad de servicios:</strong> {{ conductor_menos_servicios.servicios_realizados|default:0 }}
 						</div>
+						{% else %}
+						<div class="card-text text-muted">No hay datos disponibles.</div>
+						{% endif %}
 					</div>
 				</div>
 			</div>
@@ -312,7 +320,7 @@
 								<td>{{ conductor.usuario.Nombres }}  {{ conductor.usuario.Apellidos }}</td>
                             	<td>
 									<span class="badge bg-info text-dark" style="font-size:1rem;">
-										{{ conductor.total_viajes_realizados }}
+										{{ conductor.servicios_realizados }}
 									</span>
 								</td>
 								<td>
