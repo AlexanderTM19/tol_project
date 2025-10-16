@@ -286,7 +286,12 @@ def choferes(request):
     # Obtener lista de choferes (asumo que 'Conductores' es tu modelo)
     # select_related mejora la eficiencia al obtener datos relacionados
     try:
-        lista_choferes = Conductores.objects.select_related('usuario', 'vehiculo').all()
+        lista_choferes = (
+            Conductores.objects
+            .select_related('usuario', 'vehiculo')
+            .prefetch_related('reservas_set', 'reservas_set__Origen')
+            .all()
+        )
     except NameError:
         # En caso de que el modelo Conductores no esté definido/importado
         lista_choferes = [] 
@@ -549,13 +554,26 @@ def form_modpro(request, id):
 def _construir_eventos_reservas():
     reservas = Reservas.objects.select_related('Origen', 'Destino', 'Chofer_asignado__usuario').all()
     eventos = []
+    # Fecha/hora actual sin tz para comparar con Date/Time de la BD
+    ahora = timezone.localtime().replace(tzinfo=None)
     for reserva in reservas:
         inicio = datetime.combine(reserva.Fecha, reserva.Hora)
+        # Auto-marcar como REALIZADO si la fecha/hora ya pasó y no está cancelada
+        if inicio < ahora and (reserva.estado or 'PENDIENTE') == 'PENDIENTE':
+            reserva.estado = 'REALIZADO'
+            try:
+                reserva.save(update_fields=['estado'])
+            except Exception:
+                # En caso de algún error de escritura, continuamos mostrando el estado derivado
+                pass
         nombre_cliente = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip()
         chofer_asignado = None
         if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
             chofer_usuario = reserva.Chofer_asignado.usuario
             chofer_asignado = f"{chofer_usuario.Nombres} {chofer_usuario.Apellidos}".strip()
+
+        estado = (reserva.estado or '').lower()
+        clase_estado = f"evt-{estado}" if estado else ''
 
         eventos.append({
             'id': str(reserva.Id_reserva),
@@ -568,7 +586,9 @@ def _construir_eventos_reservas():
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
                 'chofer': chofer_asignado or 'Sin asignar',
-            }
+                'estado': reserva.estado or 'PENDIENTE',
+            },
+            'classNames': [clase_estado] if clase_estado else [],
         })
 
     return eventos
@@ -659,7 +679,9 @@ def crear_reserva_admin(request):
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
                 'chofer': chofer_nombre,
-            }
+                'estado': reserva.estado or 'PENDIENTE',
+            },
+            'classNames': [f"evt-{(reserva.estado or '').lower()}"] if reserva.estado else [],
         }
         return JsonResponse({'exito': True, 'evento': evento})
 
@@ -751,8 +773,9 @@ def aceptar_reserva_web(request):
             'desde': reserva_confirmada.Origen.Nombre_Comuna if reserva_confirmada.Origen else '',
             'hasta': reserva_confirmada.Destino.Nombre_Comuna if reserva_confirmada.Destino else '',
             'chofer': f"{chofer.usuario.Nombres} {chofer.usuario.Apellidos}".strip(),
+            'estado': reserva_confirmada.estado or 'PENDIENTE',
         },
-        'color': '#17a2b8',
+        'classNames': [f"evt-{(reserva_confirmada.estado or '').lower()}"] if reserva_confirmada.estado else [],
     }
 
     reserva_web.delete()
@@ -778,3 +801,26 @@ def rechazar_reserva_web(request):
     reserva_web.delete()
 
     return JsonResponse({'exito': True})
+
+@login_required
+@user_passes_test(es_admin)
+def delete_Tarifa(request, id):
+    tarifa_eliminar = Tarifas.objects.get(id_tarifa=id)
+    tarifa_eliminar.delete()
+    return redirect(to="vista_tarifas_admin")
+
+#-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
+def form_mod_tarifa(request, id):
+    Tarifas_existentes = Tarifas.objects.get(id_tarifa=id)
+    mensaje=""
+    if request.method == 'POST':
+        form = TarifasForm(request.POST, instance=Tarifas_existentes)
+        if form.is_valid():
+            form.save()
+            mensaje = "Tarifa Modificada Correctamente"
+            return redirect(to="vista_tarifas_admin")
+    else:
+        return render(request, "core/form_mod_tarifa.html", {"form":TarifasForm(instance=Tarifas_existentes), "mensaje":mensaje})
+

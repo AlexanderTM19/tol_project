@@ -1,0 +1,278 @@
+/* Estilos Modernos compartidos para Conductor y Administrador
+   Extraídos desde serviciosConductor.html */
+
+.servicios-wrapper {
+    background: #f5f7fb;
+    min-height: 100vh;
+    padding-bottom: 3rem;
+}
+
+.hero-card {
+    background: linear-gradient(135deg, #1f7cf4 0%, #49befe 100%);
+    border-radius: 24px;
+    color: #ffffff;
+    padding: 2.5rem;
+    box-shadow: 0 20px 45px rgba(31, 124, 244, 0.25);
+    overflow: hidden;
+    position: relative;
+}
+
+.hero-card::after {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    filter: blur(0.5px);
+}
+
+.hero-card .badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-card h1 {
+    font-weight: 700;
+}
+
+.resumen-stats {
+    gap: 1.5rem;
+}
+
+.resumen-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.8rem 1.6rem;
+    box-shadow: 0 18px 30px rgba(13, 39, 80, 0.12);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.resumen-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(73, 190, 254, 0.12), rgba(31, 124, 244, 0.08));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.resumen-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 22px 40px rgba(13, 39, 80, 0.16);
+}
+
+.resumen-card:hover::after {
+    opacity: 1;
+}
+
+.resumen-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #1f7cf4;
+    background: rgba(31, 124, 244, 0.1);
+}
+
+.timeline-section {
+    margin-top: 3rem;
+}
+
+.timeline-title {
+    font-weight: 700;
+    color: #103a70;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.timeline-title i {
+    font-size: 1.4rem;
+    color: #1f7cf4;
+}
+
+.reserva-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.6rem;
+    box-shadow: 0 12px 24px rgba(15, 27, 60, 0.1);
+    margin-bottom: 1.4rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(16, 58, 112, 0.05);
+    animation: fadeInUp 0.6s ease both;
+}
+
+.reserva-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(31, 124, 244, 0.06), rgba(73, 190, 254, 0.06));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.reserva-card:hover::before {
+    opacity: 1;
+}
+
+.reserva-badge {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(31, 124, 244, 0.12);
+    color: #1f7cf4;
+    font-weight: 600;
+}
+
+.reserva-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1.2rem;
+}
+
+.meta-item {
+    background: rgba(16, 58, 112, 0.04);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: #103a70;
+}
+
+.meta-item i {
+    color: #1f7cf4;
+    font-size: 1rem;
+}
+
+.badge-historico {
+    background: rgba(239, 71, 111, 0.14);
+    color: #ef476f;
+}
+
+.empty-state {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2.8rem 2rem;
+    text-align: center;
+    color: #58729e;
+    box-shadow: 0 14px 30px rgba(16, 58, 112, 0.08);
+}
+
+.empty-state i {
+    font-size: 2.4rem;
+    color: #1f7cf4;
+    margin-bottom: 1rem;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* --- Tablas modernas (tomado de fichaConductor) --- */
+.card-custom-table {
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.04);
+    transition: transform 0.25s cubic-bezier(.4, 2, .6, 1), box-shadow 0.25s;
+    background: #fff;
+    border: none;
+    min-width: 100%;
+    max-width: 100%;
+    min-height: 220px;
+    height: 100%;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-custom-table:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+.modern-table thead th {
+    background: #eaf1fb;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-size: 1.05rem;
+    color: #1e3c72;
+}
+
+.modern-table tbody td { padding: 0.85rem 1rem; vertical-align: middle; }
+.modern-table tbody tr { transition: background 0.2s; }
+.modern-table tbody tr:hover { background: #f1f7ff; }
+.modern-table .badge { border-radius: 0.7rem; padding: 0.5em 0.9em; font-weight: 600; }
+
+/* Alinear ancho de grillas con el hero */
+.main-content .card-custom-table { width: 100%; }
+
+/* Estilos para DataTables (paginación, filtros) */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 0.6rem;
+    border: 1px solid #d6ddeb;
+    background: #fff;
+    padding: 0.35rem 0.6rem;
+    outline: none;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+    border-color: #1f7cf4;
+    box-shadow: 0 0 0 3px rgba(31,124,244,0.12);
+}
+
+.dataTables_wrapper .dataTables_paginate {
+    padding-top: 0.75rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 0.6rem !important;
+    border: 1px solid #e3e8f0 !important;
+    background: #fff !important;
+    color: #1e3c72 !important;
+    margin: 0 4px !important;
+    padding: 0.3rem 0.6rem !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #f1f7ff !important;
+    color: #1f7cf4 !important;
+    border-color: #cfe1ff !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #1f7cf4 !important;
+    color: #fff !important;
+    border-color: #1f7cf4 !important;
+    box-shadow: 0 4px 10px rgba(31,124,244,0.25);
+}
+
+.dataTables_wrapper .dataTables_info { color: #5b6b8b; padding-top: 0.75rem; }

@@ -3,24 +3,24 @@
 
 {% block title %}Tarifas{% endblock %}
 {% block content %}
-<div class="container section-title mt-4" data-aos="fade-up">
-    <div class="row">
-        <div class="col col-lg-12">
-            <h2>Lista de Tarifas</h2>
-            <hr>
+<div class="hero-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <span class="badge">Administración</span>
+            <h1 class="mb-0">Lista de Tarifas</h1>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-sm-0">
+            <button type="button" class="btn btn-light text-primary" data-bs-toggle="modal"
+                data-bs-target="#crearTarifaModal">
+                <i class="fas fa-plus-circle me-2"></i>Crear Tarifas
+            </button>
         </div>
     </div>
 </div>
 
-<div class="container" data-aos="fade-up">
-    <div class="card">
-        <div class="card-header d-flex justify-content-end">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearTarifaModal">
-                <i class="fas fa-plus-circle me-2"></i>Crear Tarifas
-            </button>
-        </div>
-
-        <div class="card-body">
+<div data-aos="fade-up">
+    <div class="card card-custom-table">
+        <div class="card-body p-2 p-md-3">
             {% if mensaje %}
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ mensaje }}
@@ -29,7 +29,7 @@
             {% endif %}
 
             <div class="table-responsive">
-                <table id="clientsTable" class="table table-striped table-hover">
+                <table id="clientsTable" class="table table-hover modern-table align-middle">
                     <thead>
                         <tr>
                             <th>Comuna</th>
@@ -43,15 +43,21 @@
                             <td>{{ Tarifa.Nombre_Comuna }}</td>
                             <td>${{ Tarifa.Valor | floatformat:0 }}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-secondary text-white disabled" disabled
-                                    tabindex="-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary text-white btn-edit-tarifa"
+                                        title="Modificar Tarifa"
+                                        data-id="{{ Tarifa.id_tarifa }}"
+                                        data-nombre="{{ Tarifa.Nombre_Comuna }}"
+                                        data-valor="{{ Tarifa.Valor }}"
+                                        data-url="/administrador/form_mod_tarifa/{{ Tarifa.id_tarifa }}"
+                                        data-bs-toggle="modal" data-bs-target="#editarTarifaModal">
                                     <i class="bi bi-highlighter"></i>
                                 </button>
-
-                                <button type="button" class="btn btn-sm btn-danger text-white disabled" disabled
-                                    tabindex="-1">
+                                <a href="{% url 'delete_Tarifa' Tarifa.id_tarifa %}"
+                                    class="btn btn-sm btn-danger text-white " tabindex="-1" role="button"
+                                    aria-disabled="true" title="Eliminar Tarifa">
                                     <i class="bi bi-x-square"></i>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -94,6 +100,42 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Editar Tarifa -->
+<div class="modal fade" id="editarTarifaModal" tabindex="-1" aria-labelledby="editarTarifaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarTarifa" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarTarifaModalLabel">Modificar Tarifa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="editNombreComuna">Nombre de la comuna</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                            <input id="editNombreComuna" name="Nombre_Comuna" type="text" class="form-control" placeholder="Ej: Aeropuerto, Santiago Centro" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="editValor">Valor</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <input id="editValor" name="Valor" type="number" min="0" class="form-control" placeholder="Ej: 15000" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -118,6 +160,23 @@
         // Inicializar tooltips
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+        // Rellenar modal de edición
+        const editarModalEl = document.getElementById('editarTarifaModal');
+        const formEditar = document.getElementById('formEditarTarifa');
+        const inputNombre = document.getElementById('editNombreComuna');
+        const inputValor = document.getElementById('editValor');
+
+        document.querySelectorAll('.btn-edit-tarifa').forEach(btn => {
+            btn.addEventListener('click', function(){
+                const nombre = this.dataset.nombre || '';
+                const valor = this.dataset.valor || '';
+                const url = this.dataset.url || '';
+                inputNombre.value = nombre;
+                inputValor.value = valor;
+                formEditar.setAttribute('action', url);
+            });
+        });
     });
 </script>
 {% endblock %}

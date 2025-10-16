@@ -48,6 +48,11 @@ class ClientesForm(forms.ModelForm):
                 attrs={'class': 'form-check-input'}
             )
         }
+    # Asegurar estilo consistente en Cantidad_viajes si está presente en el modelo
+    Cantidad_viajes = forms.IntegerField(
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
 
 #-------------------------------------------------------------------------------------------------------------------------------
 class Rol_Form(forms.ModelForm):
@@ -71,7 +76,8 @@ class Rol_Form(forms.ModelForm):
 class UsuariosForm(forms.ModelForm):
     class Meta:
         model = Usuarios
-        fields = "__all__" 
+        # Excluimos last_login para no sobrescribirlo desde el formulario
+        fields = ['Rut','Nombres','Apellidos','Correo','ClaveUsuario','Rol','is_active','is_staff','is_superuser'] 
         widgets = {
             'Rut': forms.TextInput(
                 attrs={
@@ -105,9 +111,12 @@ class UsuariosForm(forms.ModelForm):
             ),
             'Rol': forms.Select(
                 attrs={
-                    'class': 'form-control'
+                    'class': 'form-select'
                 }
             ),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 #-------------------------------------------------------------------------------------------------------------------------------

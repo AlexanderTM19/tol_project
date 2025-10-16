@@ -32,6 +32,8 @@
 
     <!-- Administrador CSS File -->
     <link href="../../static/css/administrador.css" rel="stylesheet">
+    <!-- Tema moderno compartido (conductor/administración) -->
+    <link href="../../static/css/conductor_admin.css" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -108,7 +110,11 @@
         </nav>
 
         <main class="main-content">
-            {% block content %}{% endblock %}
+            <div class="servicios-wrapper">
+                <div class="container-fluid py-4 px-4 px-xl-5">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
         </main>
 
         <script>
