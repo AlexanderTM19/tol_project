@@ -132,34 +132,41 @@ def ficha_conductor(request):
     except Conductores.DoesNotExist:
         conductor = None
 
-    conductores = [44, 34, 29, 24, 33, 36, 25, 16, 31, 10, 27, 2, 7, 43, 21, 1, 37, 4, 12, 18, 15, 32, 5, 3, 13, 41]
-    suspendidos = [26, 22, 6, 11]
-    all_fichas = conductores + suspendidos
-    all_fichas = sorted(set(all_fichas))
-    fake = Faker('es_ES')
-    grilla_conductores = []
-    random.seed(42)
-    for ficha in all_fichas:
-        nombre = fake.first_name()
-        apellido = fake.last_name()
-        servicios = random.randint(1, 200)
-        activo = ficha not in suspendidos
-        grilla_conductores.append({
-            "numero": ficha,
-            "nombre": nombre,
-            "apellido": apellido,
-            "servicios": servicios,
-            "activo": activo
-        })
-    total_filas = len(grilla_conductores)
-    return render(request, 'core/fichaConductor.html', {
-        'conductores': conductores,
-        'suspendidos': suspendidos,
-        'grilla_conductores': grilla_conductores,
-        'total_filas': total_filas,
-        'conductor': conductor,
-        'vehiculo': conductor.vehiculo if conductor else None,
-    })
+    try:
+        # 1. Filtramos solo las reservas que han sido 'REALIZADO'.
+        # 2. Ordenamos por la 'Fecha' y luego por la 'Hora' (descendente).
+        # 3. Usamos .select_related('Chofer_asignado') para obtener los datos del conductor de una vez.
+        
+        # El método .latest() funciona si el campo es DateTimeField. 
+        # Como tienes DateField y TimeField por separado, la forma más fiable es usar .order_by() y tomar el primero.
+        
+        ultima_reserva = Reservas.objects.filter(
+            estado='REALIZADO',
+            Chofer_asignado__isnull=False # Asegura que tenga un conductor asignado
+        ).select_related('Chofer_asignado').order_by('-Fecha', '-Hora').first()
+        
+        if ultima_reserva:
+            ultimo_conductor = ultima_reserva.Chofer_asignado
+        else:
+            ultimo_conductor = None
+            
+    except Reservas.DoesNotExist:
+        # Esto maneja el caso en que no hay reservas en absoluto
+        ultimo_conductor = None
+    
+    Listado_conductores = Conductores.objects.all()
+    
+    context = {
+    # ... otros datos ...
+    'ultima_reserva_realizada': ultima_reserva,        # La reserva completa (para fecha/hora)
+    'ultimo_conductor_servicio': ultimo_conductor, 
+    'conductor': conductor,
+    'Lista_conductores': Listado_conductores,
+    'vehiculo': conductor.vehiculo if conductor else None,# El objeto Conductor (si existe)
+    }
+
+    
+    return render(request, 'core/fichaConductor.html', context)
 
 
 @login_required
@@ -424,7 +431,18 @@ def vista_tarifas_admin(request):
     
     return render(request, 'core/tarifasAdministrador.html', contexto)
 
+
 #-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
+def delete_Tarifa(request, id):
+    tarifa_eliminar = Tarifas.objects.get(id_tarifa=id)
+    tarifa_eliminar.delete()
+    return redirect(to="vista_tarifas_admin")
+
+#-------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin)
 def form_mod_tarifa(request, id):
     Tarifas_existentes = Tarifas.objects.get(id_tarifa=id)
     mensaje=""
