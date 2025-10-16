@@ -20,7 +20,7 @@ urlpatterns = [
     path('administrador/clientes', views.clientes, name='clientes'),
     path('administrador/vist_Usuarios', views.vist_Usuarios, name='vist_Usuarios'), 
     path('administrador/vista_tarifas_admin', views.vista_tarifas_admin, name='vista_tarifas_admin'),
-    path('delete_Tarifa/<id>',views.delete_Tarifa,name='delete_Tarifa'), 
+    path('administrador/form_mod_tarifa/<id>', views.form_mod_tarifa, name='form_mod_tarifa'),
     path('administrador/form_crear_usuarios', views.form_crear_usuarios, name='form_crear_usuarios'),
     path('administrador/form_modUser/<id>',views.form_mod_usu, name='form_mod_usu'),
     path('administrador/form_Rol', views.form_Rol, name='form_Rol'),
@@ -32,6 +32,7 @@ urlpatterns = [
     path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
     path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),
     path('administrador/reservas/crear', views.crear_reserva_admin, name='crear_reserva_admin'),
+    path('delete_Tarifa/<id>',views.delete_Tarifa,name='delete_Tarifa'),
 
     # Login y Logout
     path('login/', views.login_view, name='login'),

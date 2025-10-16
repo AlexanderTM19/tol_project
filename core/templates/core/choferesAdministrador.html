@@ -3,23 +3,23 @@
 
 {% block title %}Choferes{% endblock %}
 {% block content %}
-<div class="container section-title mt-4" data-aos="fade-up">
-    <div class="row">
-        <div class="col col-lg-12">
-            <h2>Lista de Conductores</h2>
-            <hr>
+<div class="hero-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <span class="badge">Administración</span>
+            <h1 class="mb-0">Lista de Conductores</h1>
         </div>
-    </div>
-</div>
-
-<div class="container" data-aos="fade-up">
-    <div class="card">
-        <div class="card-header d-flex justify-content-end">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearChoferModal">
+        <div class="d-flex gap-2 mt-3 mt-sm-0">
+            <button type="button" class="btn btn-light text-primary" data-bs-toggle="modal" data-bs-target="#crearChoferModal">
                 <i class="fas fa-plus-circle me-2"></i>Crear Conductor
             </button>
         </div>
-        <div class="card-body">
+    </div>
+    </div>
+
+<div data-aos="fade-up">
+    <div class="card card-custom-table">
+        <div class="card-body p-2 p-md-3">
             <div class="container mt-4">
                 {% if messages %}
                 {% for message in messages %}
@@ -32,12 +32,12 @@
 
             </div>
             <div class="table-responsive">
-                <table id="choferesTable" class="table table-striped table-hover">
+                <table id="choferesTable" class="table table-hover modern-table align-middle">
                     <thead>
                         <tr>
                             <th>RUT</th>
                             <th>Nombre</th>
-                            <th>Teléfono</th>
+                            <th>TelǸfono</th>
                             <th>Correo</th>
                             <th>Vehiculo</th>
                             <th>Acciones</th>
@@ -58,17 +58,24 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-secondary text-white" data-bs-toggle="modal"
-                                    data-bs-placement="top" data-bs-title="Ver historial"
-                                    data-bs-target="#historialModal">
+                                <button class="btn btn-sm btn-secondary text-white" data-bs-toggle="modal" data-bs-placement="top" data-bs-title="Ver historial" data-bs-target="#historialModal" data-rut="{{ chofer.usuario.Rut }}">
                                     <i class="fa-solid fa-book"></i>
                                 </button>
-                                <button class="btn btn-sm btn-primary text-white" data-bs-toggle="modal"
-                                    data-bs-target="#vehiculoModal" data-bs-title="Información vehículo">
+                                <button class="btn btn-sm btn-primary text-white" data-bs-toggle="modal" data-bs-target="#vehiculoModal" data-bs-title="Información vehículo">
                                     <i class="fa-solid fa-car"></i>
                                 </button>
-                                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal"
-                                    data-bs-target="#infoChoferModal" data-bs-title="Información chofer">
+                                <button
+                                    class="btn btn-sm btn-info text-white"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#infoChoferModal"
+                                    data-bs-title="Información chofer"
+                                    data-rut="{{ chofer.usuario.Rut }}"
+                                    data-nombre="{{ chofer.usuario.Nombres }} {{ chofer.usuario.Apellidos }}"
+                                    data-telefono="{{ chofer.Telefono }}"
+                                    data-correo="{{ chofer.usuario.Correo }}"
+                                    data-pais="{{ chofer.Nacionalidad }}"
+                                    data-direccion="{{ chofer.Direccion }}"
+                                >
                                     <i class="fa-solid fa-info-circle"></i>
                                 </button>
                             </td>
@@ -138,22 +145,7 @@
                                 <th>Tarifa</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>2024-05-20</td>
-                                <td>Manuel García</td>
-                                <td>$55.000</td>
-                            </tr>
-                            <tr>
-                                <td>2024-05-18</td>
-                                <td>Ana Sánchez</td>
-                                <td>$70.000</td>
-                            </tr>
-                            <tr>
-                                <td>2024-05-15</td>
-                                <td>Manuel García</td>
-                                <td>$25.000</td>
-                            </tr>
+                        <tbody id="historialTableBody">
                         </tbody>
                     </table>
                 </div>
@@ -201,15 +193,13 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="revTecnica" class="form-label">Revisión Técnica</label>
-                            <input type="text" class="form-control text-success fw-bold" id="revTecnica"
-                                value="Correcta" disabled>
+                            <input type="text" class="form-control text-success fw-bold" id="revTecnica" value="Correcta" disabled>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="soapEstado" class="form-label">SOAP</label>
-                            <input type="text" class="form-control text-danger fw-bold" id="soapEstado" value="Vencido"
-                                disabled>
+                            <input type="text" class="form-control text-danger fw-bold" id="soapEstado" value="Vencido" disabled>
                         </div>
                     </div>
                 </form>
@@ -237,19 +227,17 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="choferNombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="choferNombre" value="Juan Pérez" disabled>
+                            <input type="text" class="form-control" id="choferNombre" value="Juan PǸrez" disabled>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="choferTelefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="choferTelefono" value="+56 9 1234 5678"
-                                disabled>
+                            <input type="text" class="form-control" id="choferTelefono" value="+56 9 1234 5678" disabled>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="choferCorreo" class="form-label">Correo</label>
-                            <input type="email" class="form-control" id="choferCorreo" value="juan.perez@example.com"
-                                disabled>
+                            <input type="email" class="form-control" id="choferCorreo" value="juan.perez@example.com" disabled>
                         </div>
                     </div>
                     <div class="row">
@@ -259,8 +247,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="choferDireccion" class="form-label">Dirección</label>
-                            <input type="text" class="form-control" id="choferDireccion" value="Av. Siempre Viva 742"
-                                disabled>
+                            <input type="text" class="form-control" id="choferDireccion" value="Av. Siempre Viva 742" disabled>
                         </div>
                     </div>
                 </form>
@@ -272,6 +259,28 @@
     </div>
 </div>
 
+{# Almacenamos filas pre-renderizadas del historial por cada chofer para poblar el modal dinámicamente #}
+<div id="historialStore" class="d-none" hidden>
+    {% for chofer in choferes %}
+    <template id="historialTmpl-{{ chofer.usuario.Rut }}">
+        {% for reserva in chofer.reservas_set.all %}
+        <tr>
+            <td>{{ reserva.Fecha }}</td>
+            <td>{{ reserva.Nombre_Cliente }} {{ reserva.Apellidos_Cliente }}</td>
+            <td>
+                {% if reserva.Origen %}
+                    ${{ reserva.Origen.Valor|floatformat:0 }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+    </template>
+    {% endfor %}
+    </div>
+
 {% endblock %}
 
 {% block extra_css %}
@@ -279,40 +288,59 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 <script>
-    $(document).ready(function () {
-        const dataTableConfig = {
-            "language": {
-                "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json"
-            },
-            "lengthMenu": [5, 10, 25, 50],
-            "pageLength": 10
-        };
-
-        $('#choferesTable').DataTable(dataTableConfig);
-        $('#vehiculosTable').DataTable(dataTableConfig);
-
-        // Inicializar tooltips
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-    });
-
-    {% if vehiculo_form.errors %}
+    // Al abrir el modal de información del chofer, rellenar con datos reales desde el botón que lo disparó
     document.addEventListener('DOMContentLoaded', function () {
-        const vehiculoModal = new bootstrap.Modal(document.getElementById('crearVehiculoModal'));
-        vehiculoModal.show();
-    });
-    {% endif %}
+        const infoChoferModal = document.getElementById('infoChoferModal');
+        if (!infoChoferModal) return;
 
-    {% if chofer_form.errors %}
-    document.addEventListener('DOMContentLoaded', function () {
-        const choferModal = new bootstrap.Modal(document.getElementById('crearChoferModal'));
-        choferModal.show();
+        infoChoferModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (!button) return;
+
+            const rut = button.getAttribute('data-rut') || '';
+            const nombre = button.getAttribute('data-nombre') || '';
+            const telefono = button.getAttribute('data-telefono') || '';
+            const correo = button.getAttribute('data-correo') || '';
+            const pais = button.getAttribute('data-pais') || '';
+            const direccion = button.getAttribute('data-direccion') || '';
+
+            const setValue = (id, value) => {
+                const el = infoChoferModal.querySelector('#' + id);
+                if (el) el.value = value || '';
+            };
+
+            setValue('choferRut', rut);
+            setValue('choferNombre', nombre);
+            setValue('choferTelefono', telefono);
+            setValue('choferCorreo', correo);
+            setValue('choferPais', pais);
+            setValue('choferDireccion', direccion);
+        });
     });
-    {% endif %}
+</script>
+<script>
+    // Poblar historial real del chofer seleccionado cuando se abre el modal
+    document.addEventListener('DOMContentLoaded', function () {
+        const historialModal = document.getElementById('historialModal');
+        if (!historialModal) return;
+
+        historialModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const tbody = historialModal.querySelector('#historialTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const rut = button ? button.getAttribute('data-rut') : '';
+            if (!rut) return;
+
+            const tmpl = document.getElementById('historialTmpl-' + rut);
+            if (tmpl && tmpl.innerHTML.trim()) {
+                tbody.innerHTML = tmpl.innerHTML;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Sin servicios registrados</td></tr>';
+            }
+        });
+    });
 </script>
 {% endblock %}
