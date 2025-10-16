@@ -85,9 +85,9 @@
 	<div class="profile-info">
 		<div class="info-row"><span class="info-label"><i class="bi bi-envelope-at"></i> Correo:</span><span class="info-value">{{ conductor.usuario.Correo }}</span></div>
 		<div class="info-row"><span class="info-label"><i class="bi bi-telephone"></i> Contacto:</span><span class="info-value">{{ conductor.Telefono }}</span></div>
-		<div class="info-row"><span class="info-label"><i class="bi bi-person-badge"></i> N° Ficha:</span><span class="info-value">41</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-person-badge"></i> N° Ficha:</span><span class="info-value">{{ conductor.Nro_ficha|default:"-" }}</span></div>
 		<div class="info-row"><span class="info-label"><i class="bi bi-person-badge"></i> Rut:</span><span class="info-value">{{ conductor.usuario.Rut }}</span></div>
-		<div class="info-row"><span class="info-label"><i class="bi bi-calendar-check"></i> Servicios:</span><span class="info-value">{{ conductor.total_viajes_realizados }}</span></div>
+		<div class="info-row"><span class="info-label"><i class="bi bi-calendar-check"></i> Servicios:</span><span class="info-value">{{ servicios_realizados|default:conductor.total_viajes_realizados }}</span></div>
 		<div class="info-row"><span class="info-label"><i class="bi bi-geo-alt"></i> Dirección:</span><span class="info-value">{{ conductor.Direccion }}</span></div>
 		<div class="info-row"><span class="info-label"><i class="bi bi-car-front"></i> Vehiculo:</span><span class="info-value">
 			{% if vehiculo %}

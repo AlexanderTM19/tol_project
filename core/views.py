@@ -10,6 +10,7 @@ from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tar
 import random
 import json
 from django.http import JsonResponse
+from django.db.models import Count, Q
 from django.utils.dateformat import DateFormat 
 from datetime import datetime
 from django.shortcuts import get_object_or_404
@@ -154,7 +155,14 @@ def ficha_conductor(request):
         # Esto maneja el caso en que no hay reservas en absoluto
         ultimo_conductor = None
     
-    Listado_conductores = Conductores.objects.all()
+    # Anotar cantidad de servicios REALIZADOS por conductor usando el reverse accessor correcto
+    Listado_conductores = Conductores.objects.all().annotate(
+        servicios_realizados=Count('reservas', filter=Q(reservas__estado='REALIZADO'))
+    )
+
+    # Conductor con más y menos servicios realizados
+    conductor_mas_servicios = Listado_conductores.order_by('-servicios_realizados', 'Nro_ficha').first()
+    conductor_menos_servicios = Listado_conductores.order_by('servicios_realizados', 'Nro_ficha').first()
     
     context = {
     # ... otros datos ...
@@ -162,6 +170,9 @@ def ficha_conductor(request):
     'ultimo_conductor_servicio': ultimo_conductor, 
     'conductor': conductor,
     'Lista_conductores': Listado_conductores,
+    'total_filas': Listado_conductores.count(),
+    'conductor_mas_servicios': conductor_mas_servicios,
+    'conductor_menos_servicios': conductor_menos_servicios,
     'vehiculo': conductor.vehiculo if conductor else None,# El objeto Conductor (si existe)
     }
 
@@ -176,9 +187,13 @@ def perfil_conductor_view(request):
     except Conductores.DoesNotExist:
         return redirect('inicio')
 
+    # Calcular servicios totales realizados (estado REALIZADO) por este conductor
+    servicios_realizados = Reservas.objects.filter(Chofer_asignado=conductor, estado='REALIZADO').count()
+
     contexto = {
         'conductor': conductor,
         'vehiculo': conductor.vehiculo,
+        'servicios_realizados': servicios_realizados,
     }
     return render(request, 'core/perfilConductor.html', contexto)
 
