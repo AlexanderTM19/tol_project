@@ -158,6 +158,14 @@
                                 <label class="form-check-label ms-2" for="{{ form_reserva.Confirmacion.id_for_label }}">Confirmación inmediata</label>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <label for="{{ form_reserva.Monto_tarifa.id_for_label }}" class="form-label">Monto</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-suitcase"></i></span>
+                                {{ form_reserva.Monto_tarifa }}
+                            </div>
+                            <div class="text-danger small">{{ form_reserva.Monto_tarifa.errors }}</div>
+                        </div>
                     </div>
 
                     {% if form_reserva.non_field_errors %}
@@ -261,6 +269,13 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
                                 <input type="text" class="form-control" id="infoChofer" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label for="infoMonto" class="form-label">Monto del servcio</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                <input type="text" class="form-control" id="infoMonto" readonly>
                             </div>
                         </div>
                     </div>
@@ -472,6 +487,8 @@
                 document.getElementById('infoDesde').value = event.extendedProps.desde;
                 document.getElementById('infoHasta').value = event.extendedProps.hasta;
                 document.getElementById('infoChofer').value = event.extendedProps.chofer;
+                document.getElementById('infoMonto').value = event.extendedProps.monto;
+
                 var estado = event.extendedProps.estado || '';
                 var infoEstado = document.getElementById('infoEstado');
                 if (infoEstado) { infoEstado.value = estado; }

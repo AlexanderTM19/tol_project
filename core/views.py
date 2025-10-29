@@ -248,16 +248,33 @@ def clientes(request):
 @login_required
 @user_passes_test(es_admin)
 def estadisticas(request):
-    # Datos dummy para tarjetas
+    # Consultas reales para las tarjetas
+    # Servicios por estado (modelo Reservas)
+    servicios_realizados = Reservas.objects.filter(estado='REALIZADO').count()
+    servicios_por_realizar = Reservas.objects.filter(estado='PENDIENTE').count()
+    servicios_cancelados = Reservas.objects.filter(estado='CANCELADO').count()
+
+    # Clientes: no hay campo de fecha de creación, usamos Cantidad_viajes como proxy
+    clientes_nuevos = Clientes.objects.filter(Cantidad_viajes=0).count()
+    clientes_frecuentes = Clientes.objects.filter(Cantidad_viajes__gt=0).count()
+
+    # Totales monetarios: sumar Monto_tarifa de Reservas REALIZADO
+    from django.db.models import Sum
+    total_empresa_agg = Reservas.objects.filter(estado='REALIZADO').aggregate(total=Sum('Monto_tarifa'))
+    total_empresa = total_empresa_agg.get('total') or 0
+
+    # Ingreso personal: no hay campo que indique origen del dinero (empresa/personal).
+    # Usamos una estimación por defecto del 20% del total (esta suposición se puede ajustar).
+    ingreso_personal = int(total_empresa * 0.20)
+
     contexto = {
-        'servicios_realizados': 201,
-        'servicios_por_realizar': 87,
-        'servicios_cancelados': 12,
-        'clientes_nuevos': 49,
-        'clientes_frecuentes': 178,
-        # Totales por defecto: empresa > personal
-        'total_empresa': 5025623,
-        'ingreso_personal': 1056277,
+        'servicios_realizados': servicios_realizados,
+        'servicios_por_realizar': servicios_por_realizar,
+        'servicios_cancelados': servicios_cancelados,
+        'clientes_nuevos': clientes_nuevos,
+        'clientes_frecuentes': clientes_frecuentes,
+        'total_empresa': total_empresa,
+        'ingreso_personal': ingreso_personal,
     }
     return render(request, 'core/estadisticas.html', contexto)
 
@@ -619,6 +636,7 @@ def _construir_eventos_reservas():
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
                 'chofer': chofer_asignado or 'Sin asignar',
+                'monto': reserva.Monto_tarifa or 0 ,
                 'estado': reserva.estado or 'PENDIENTE',
             },
             'classNames': [clase_estado] if clase_estado else [],
@@ -712,6 +730,7 @@ def crear_reserva_admin(request):
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
                 'chofer': chofer_nombre,
+                'monto': reserva.Monto_tarifa,
                 'estado': reserva.estado or 'PENDIENTE',
             },
             'classNames': [f"evt-{(reserva.estado or '').lower()}"] if reserva.estado else [],
