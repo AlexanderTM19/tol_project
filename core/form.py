@@ -395,7 +395,7 @@ class ReservasForm(forms.ModelForm):
         # Excluimos 'estado' para usar el valor por defecto desde la vista
         fields = [
             'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo',
-            'Origen', 'Destino', 'Dirrecion', 'Fecha', 'Hora',
+            'Origen', 'Destino','Monto_tarifa', 'Dirrecion', 'Fecha', 'Hora',
             'Cantidad_pasajeros', 'Cantidad_maletas', 'Confirmacion',
             'Chofer_asignado'
         ]
@@ -417,6 +417,7 @@ class ReservasForm(forms.ModelForm):
 
             # Para campos numéricos, TextInput o NumberInput. 
             # El validador del modelo se encargará de limitar el rango.
+            'Monto_tarifa': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 9999999}),
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
             'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),

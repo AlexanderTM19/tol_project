@@ -146,6 +146,7 @@ class Reservas(models.Model):
     Correo = models.EmailField(blank=True, null=True)
     Origen = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_origen')
     Destino = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_destino')
+    Monto_tarifa = models.IntegerField(null=True, blank=True, default=0)
     Dirrecion = models.CharField(max_length=50, null=False)
     Fecha = models.DateField()
     Hora = models.TimeField()
