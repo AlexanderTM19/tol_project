@@ -148,6 +148,79 @@
 
     <!-- Main JS File -->
     <script src="../../static/js/main.js"></script>
+    <script>
+        (function(){
+          const KEYWORDS = [
+            'nombre','nombres','apellido','apellidos','nombre completo','nombre_completo','nombreyapellido','nombre y apellido',
+            'pais','país','ciudad','comuna','localidad','country','city'
+          ];
+          const AUTOCOMPLETE_KEYS = ['name','given-name','additional-name','family-name','country','country-name','address-level2','address-level1','address-level3','address-level4','organization'];
+
+          function shouldCapitalize(el){
+            if(!el || el.disabled || el.readOnly) return false;
+            const type = (el.getAttribute('type')||'text').toLowerCase();
+            if(['email','password','url','number','tel'].includes(type)) return false;
+            const ac = (el.getAttribute('autocomplete')||'').toLowerCase();
+            const hayAuto = AUTOCOMPLETE_KEYS.some(k => ac.includes(k));
+            const bag = [el.name, el.id, el.placeholder, el.getAttribute('aria-label')]
+              .filter(Boolean).join(' ').toLowerCase();
+            const hayKeyword = KEYWORDS.some(k => bag.includes(k));
+            const dataAttr = el.dataset && (el.dataset.capitalize === 'true' || el.dataset.capitalize === 'name');
+            return hayKeyword || hayAuto || dataAttr;
+          }
+
+          function titleCaseName(str){
+            if(!str) return '';
+            // Normaliza espacios y minúsculas generales
+            const cleaned = String(str).trim().replace(/\s+/g,' ');
+            // Por palabra, también dividir por guion/apóstrofe y capitalizar cada segmento
+            return cleaned.split(' ').map(word => {
+              return word.split('-').map(part => part.split("'").map(seg => {
+                if(!seg) return seg;
+                const lower = seg.toLocaleLowerCase('es');
+                return lower.charAt(0).toLocaleUpperCase('es') + lower.slice(1);
+              }).join("'")).join('-');
+            }).join(' ');
+          }
+
+          function applyIfMatches(el){
+            if(!shouldCapitalize(el)) return;
+            const prev = el.value;
+            const next = titleCaseName(prev);
+            if(prev !== next){ el.value = next; }
+          }
+
+          // Capitaliza al salir del campo
+          document.addEventListener('blur', function(e){
+            const t = e.target;
+            if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')){
+              applyIfMatches(t);
+            }
+          }, true);
+
+          // Capitaliza justo antes de enviar cualquier formulario
+          document.addEventListener('submit', function(e){
+            const form = e.target;
+            if(!(form instanceof HTMLFormElement)) return;
+            const fields = form.querySelectorAll('input[type="text"], input[type="search"], textarea');
+            fields.forEach(applyIfMatches);
+          }, true);
+
+          // Maneja elementos dinámicos
+          const mo = new MutationObserver(muts => {
+            muts.forEach(m => {
+              m.addedNodes && m.addedNodes.forEach(node => {
+                if(node && node.querySelectorAll){
+                  node.querySelectorAll('input[type="text"], input[type="search"], textarea').forEach(el => {
+                    if(el && el.value) applyIfMatches(el);
+                  });
+                }
+              });
+            });
+          });
+          mo.observe(document.documentElement, {childList:true, subtree:true});
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 
