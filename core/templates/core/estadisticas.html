@@ -111,6 +111,10 @@
               <option value="rango">Rango</option>
             </select>
             <div id="periodControls" class="d-flex align-items-center gap-2"></div>
+            <button id="btnExportExcel" type="button" class="btn btn-sm btn-success">
+              <i class="bi bi-file-earmark-excel"></i>
+              <span class="ms-1">Exportar a Excel</span>
+            </button>
           </div>
         </div>
         <div class="chart-box">
@@ -173,6 +177,7 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
     // -------------------------------------------------------------------------
     // 1. OBTENCIÓN DE DATOS DEL BACKEND (DJANGO)
