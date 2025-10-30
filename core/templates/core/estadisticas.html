@@ -1,4 +1,4 @@
-{% extends 'core/administrador.html' %}
+0{% extends 'core/administrador.html' %}
 {% load static %}
 
 {% block title %}Estadísticas{% endblock %}
@@ -174,290 +174,287 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // Utilidades para generar datos según periodo
-  function daysInMonth(year, monthIndex) { // monthIndex 0-11
-    return new Date(year, monthIndex + 1, 0).getDate();
-  }
-  function range(n){ return Array.from({length:n}, (_,i)=>i+1); }
+    // -------------------------------------------------------------------------
+    // 1. OBTENCIÓN DE DATOS DEL BACKEND (DJANGO)
+    // -------------------------------------------------------------------------
 
-  const ctxIncome = document.getElementById('incomeChart');
-  const ctxDonut = document.getElementById('servicesDonut');
-  const ctxActivity = document.getElementById('activityChart');
+  const ingresosIniciales = [];
+  const etiquetasIniciales = [];
 
-  const primary = '#0ea5e9', secondary = '#6366f1';
+    // Utilidades
+    function daysInMonth(year, monthIndex) { // monthIndex 0-11
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+    function range(n){ return Array.from({length:n}, (_,i)=>i+1); }
 
-  // Formateador CLP
-  const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+    const ctxIncome = document.getElementById('incomeChart');
+    const ctxDonut = document.getElementById('servicesDonut');
+    const ctxActivity = document.getElementById('activityChart');
 
-  // Income line chart with gradient
-  const incomeChart = new Chart(ctxIncome, {
-    type: 'bar',
-    data: {
-      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-      datasets: [{
-        label: 'Ingresos (CLP - miles)',
-        data: [12,18,15,22,27,30,35,42,39,31,28,25],
-        backgroundColor: 'rgba(14,165,233,0.25)',
-        borderColor: primary,
-        borderWidth: 2,
-        tension: .3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => ` ${fmtCLP(ctx.raw * 1000)}`
-          }
-        }
+    const primary = '#0ea5e9', secondary = '#6366f1';
+
+    // Formateador CLP
+    const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+
+    // -------------------------------------------------------------------------
+    // 2. GRÁFICO DE INGRESOS (INCOME CHART)
+    // -------------------------------------------------------------------------
+
+    // Income line chart with gradient
+    const incomeChart = new Chart(ctxIncome, {
+      type: 'bar',
+      data: {
+        labels: etiquetasIniciales,
+        datasets: [{
+          label: 'Ingresos (CLP - miles)',
+          data: ingresosIniciales,
+          backgroundColor: 'rgba(14,165,233,0.25)',
+          borderColor: primary,
+          borderWidth: 2,
+          tension: .3
+        }]
       },
-      scales: {
-        y: {
-          grid: { color: 'rgba(0,0,0,.05)' }, beginAtZero: true,
-          title: { display: true, text: 'CLP (miles)' },
-          ticks: {
-            callback: (val) => fmtCLP(val * 1000)
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${fmtCLP(ctx.raw * 1000)}`
+            }
           }
         },
-        x: { grid: { display: false } }
+        scales: {
+          y: {
+            grid: { color: 'rgba(0,0,0,.05)' }, beginAtZero: true,
+            title: { display: true, text: 'CLP (miles)' },
+            ticks: {
+              callback: (val) => fmtCLP(val * 1000)
+            }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+  // Mensaje cuando no hay datos
+  const incomeNoDataEl = document.createElement('div');
+  incomeNoDataEl.id = 'incomeNoData';
+  incomeNoDataEl.className = 'text-center text-muted mt-2';
+  incomeNoDataEl.style.display = 'none';
+  incomeNoDataEl.textContent = 'No hay datos para este periodo.';
+  ctxIncome.parentNode.appendChild(incomeNoDataEl);
+
+    // -------------------------------------------------------------------------
+    // 3. LÓGICA DINÁMICA DE ACTUALIZACIÓN (AJAX) - CORREGIDA
+    // -------------------------------------------------------------------------
+
+    // Controles dinámicos de periodo
+    const periodControls = document.getElementById('periodControls');
+    const periodFilter = document.getElementById('periodFilter');
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear-2, currentYear-1, currentYear, currentYear+1];
+    const toISO = (d) => new Date(d).toISOString().slice(0,10);
+    const addDays = (d, n) => { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt; };
+    const daysBetweenInclusive = (from, to) => {
+      const start = new Date(from), end = new Date(to);
+      const ms = end - start; if (isNaN(ms) || ms < 0) return 0;
+      return Math.floor(ms / (1000*60*60*24)) + 1;
+    };
+
+    /**
+     * @param {string} period - anio, mes, semana, dia, rango
+     * @param {Object} params - {year, month, date, from1, to1, from2, to2}
+     */
+    async function updateIncome(period, params){
+      const query = new URLSearchParams({ period, ...(params || {}) });
+      const url = `/administrador/estadisticas/data/?${query.toString()}`;
+      try{
+        const res = await fetch(url);
+        if(!res.ok){ throw new Error('HTTP ' + res.status); }
+        const payload = await res.json();
+
+        const labels = payload.labels || [];
+        const datasets = payload.datasets || [];
+
+        const hasData = datasets.length > 0 && datasets.some(ds => Array.isArray(ds.data) && ds.data.some(v => v !== null && v !== 0));
+        incomeNoDataEl.style.display = hasData ? 'none' : 'block';
+
+        incomeChart.data.labels = labels;
+        if(datasets.length){
+          incomeChart.data.datasets = datasets.map((ds, idx)=>({
+            label: ds.label || (`Serie ${idx+1}`),
+            data: ds.data || [],
+            backgroundColor: idx === 0 ? 'rgba(14,165,233,0.25)' : 'rgba(99,102,241,0.25)',
+            borderColor: idx === 0 ? primary : secondary,
+            borderWidth: 2,
+            tension: .3
+          }));
+        } else {
+          incomeChart.data.datasets = [{ label: 'Ingresos (CLP - miles)', data: [] }];
+        }
+        incomeChart.options.plugins.legend.display = incomeChart.data.datasets.length > 1;
+        incomeChart.update();
+      }catch(err){
+        console.error('Error fetching estadisticas data', err);
+        incomeNoDataEl.style.display = 'block';
+        incomeChart.data.labels = [];
+        incomeChart.data.datasets = [{ label: 'Ingresos (CLP - miles)', data: [] }];
+        incomeChart.update();
       }
     }
-  });
 
-  // Controles dinámicos de periodo
-  const periodControls = document.getElementById('periodControls');
-  const periodFilter = document.getElementById('periodFilter');
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear-2, currentYear-1, currentYear, currentYear+1];
-  const toISO = (d) => new Date(d).toISOString().slice(0,10);
-  const addDays = (d, n) => { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt; };
-  const daysBetweenInclusive = (from, to) => {
-    const start = new Date(from), end = new Date(to);
-    const ms = end - start; if (isNaN(ms) || ms < 0) return 0;
-    return Math.floor(ms / (1000*60*60*24)) + 1;
-  };
-
-  function updateIncome(period, params){
-    let labels = [], data = [];
-    if(period === 'anio'){
-      labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-      data = labels.map(()=>Math.floor(10+Math.random()*35));
-      incomeChart.data.datasets = [
-        {
-          label: 'Ingresos (CLP - miles)',
-          data,
-          backgroundColor: 'rgba(14,165,233,0.25)',
-          borderColor: primary,
-          borderWidth: 2,
-          tension: .3
-        }
-      ];
-    } else if(period === 'mes'){
-      const y = parseInt(params.year, 10);
-      const m = parseInt(params.month, 10) - 1; // 0-11
-      const dim = daysInMonth(y, m);
-      labels = range(dim).map(String);
-      data = range(dim).map(()=>Math.floor(5+Math.random()*20));
-      incomeChart.data.datasets = [
-        {
-          label: 'Ingresos (CLP - miles)',
-          data,
-          backgroundColor: 'rgba(14,165,233,0.25)',
-          borderColor: primary,
-          borderWidth: 2,
-          tension: .3
-        }
-      ];
-    } else if(period === 'semana'){
-      labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-      data = [14,17,19,15,22,26,20].map(v=>v + Math.floor(Math.random()*4)-2);
-      incomeChart.data.datasets = [
-        {
-          label: 'Ingresos (CLP - miles)',
-          data,
-          backgroundColor: 'rgba(14,165,233,0.25)',
-          borderColor: primary,
-          borderWidth: 2,
-          tension: .3
-        }
-      ];
-    } else if(period === 'dia'){
-      labels = Array.from({length: 24}, (_,i)=>`${i}:00`);
-      data = Array.from({length:24},()=>Math.floor(4+Math.random()*8));
-      incomeChart.data.datasets = [
-        {
-          label: 'Ingresos (CLP - miles)',
-          data,
-          backgroundColor: 'rgba(14,165,233,0.25)',
-          borderColor: primary,
-          borderWidth: 2,
-          tension: .3
-        }
-      ];
-    } else if(period === 'rango'){
-      const from1 = params.from1, to1 = params.to1;
-      const from2 = params.from2 || null, to2 = params.to2 || null;
-      const len1 = daysBetweenInclusive(from1, to1);
-      const len2 = (from2 && to2) ? daysBetweenInclusive(from2, to2) : 0;
-      const maxLen = Math.max(len1, len2 || 0);
-      labels = Array.from({length: maxLen}, (_,i)=>`Día ${i+1}`);
-
-      const data1 = Array.from({length: len1}, ()=>Math.floor(8+Math.random()*22));
-      const ds = [
-        {
-          label: `Rango 1 (${from1} a ${to1})`,
-          data: data1.concat(Array.from({length: maxLen-len1}, ()=>null)),
-          backgroundColor: 'rgba(14,165,233,0.25)',
-          borderColor: primary,
-          borderWidth: 2,
-          tension: .3
-        }
-      ];
-      if(from2 && to2 && len2 > 0){
-        const data2 = Array.from({length: len2}, ()=>Math.floor(8+Math.random()*22));
-        ds.push({
-          label: `Rango 2 (${from2} a ${to2})`,
-          data: data2.concat(Array.from({length: maxLen-len2}, ()=>null)),
-          backgroundColor: 'rgba(99,102,241,0.25)',
-          borderColor: secondary,
-          borderWidth: 2,
-          tension: .3
-        });
-      }
-      incomeChart.data.datasets = ds;
-    }
-    incomeChart.data.labels = labels;
-    // Mostrar leyenda solo al comparar múltiples datasets
-    incomeChart.options.plugins.legend.display = incomeChart.data.datasets.length > 1;
-    incomeChart.update();
-  }
-
-  function renderControls(period){
-    let html = '';
-    if(period === 'anio'){
-      html = `<select id="ctrlYear" class="form-select form-select-sm w-auto flex-shrink-0">${years.map(y=>`<option value="${y}" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`;
-      periodControls.innerHTML = html;
-      document.getElementById('ctrlYear').addEventListener('change', ()=>{
-        updateIncome('anio', {year: document.getElementById('ctrlYear').value});
-      });
-      updateIncome('anio', {year: currentYear});
-    } else if(period === 'mes'){
-      html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
-             `<select id=\"ctrlMonth\" class=\"form-select form-select-sm w-auto flex-shrink-0\"><option value=\"1\">Enero</option><option value=\"2\">Febrero</option><option value=\"3\">Marzo</option><option value=\"4\">Abril</option><option value=\"5\">Mayo</option><option value=\"6\">Junio</option><option value=\"7\">Julio</option><option value=\"8\">Agosto</option><option value=\"9\">Septiembre</option><option value=\"10\">Octubre</option><option value=\"11\">Noviembre</option><option value=\"12\">Diciembre</option></select>`;
-      periodControls.innerHTML = html;
-      const apply = ()=> updateIncome('mes', {year: document.getElementById('ctrlYear').value, month: document.getElementById('ctrlMonth').value});
-      document.getElementById('ctrlYear').addEventListener('change', apply);
-      document.getElementById('ctrlMonth').addEventListener('change', apply);
-      apply();
-    } else if(period === 'semana'){
-      html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
-             `<select id=\"ctrlWeek\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${range(52).map(w=>`<option value=\"${w}\">Semana ${w}</option>`).join('')}</select>`;
-      periodControls.innerHTML = html;
-      const apply = ()=> updateIncome('semana', {year: document.getElementById('ctrlYear').value, week: document.getElementById('ctrlWeek').value});
-      document.getElementById('ctrlYear').addEventListener('change', apply);
-      document.getElementById('ctrlWeek').addEventListener('change', apply);
-      apply();
-    } else if(period === 'dia'){
-      const today = new Date().toISOString().slice(0,10);
-      html = `<input id=\"ctrlDate\" type=\"date\" class=\"form-control form-control-sm w-auto flex-shrink-0\" value=\"${today}\" />`;
-      periodControls.innerHTML = html;
-      const apply = ()=> updateIncome('dia', {date: document.getElementById('ctrlDate').value});
-      document.getElementById('ctrlDate').addEventListener('change', apply);
-      apply();
-    } else if(period === 'rango'){
+    // -------------------------------------------------------------------------
+    // 4. GENERACIÓN DE CONTROLES (Sin cambios, esto está correcto)
+    // -------------------------------------------------------------------------
+    
+    function renderControls(period){
+      let html = '';
       const today = new Date();
       const weekAgo = addDays(today, -6);
       const defaultFrom = toISO(weekAgo);
       const defaultTo = toISO(today);
-      html = `
-        <div class=\"d-flex align-items-center gap-2 flex-wrap\">
-          <span class=\"small text-muted\">Rango 1</span>
-          <input id=\"range1From\" type=\"date\" class=\"form-control form-control-sm w-auto\" value=\"${defaultFrom}\" />
-          <span class=\"small\">a</span>
-          <input id=\"range1To\" type=\"date\" class=\"form-control form-control-sm w-auto\" value=\"${defaultTo}\" />
-          <div class=\"form-check form-check-inline ms-2\">
-            <input class=\"form-check-input\" type=\"checkbox\" id=\"compareToggle\">
-            <label class=\"form-check-label small\" for=\"compareToggle\">Comparar con otro rango</label>
-          </div>
-          <div id=\"compareControls\" class=\"d-none d-flex align-items-center gap-2 flex-wrap\">
-            <span class=\"small text-muted\">Rango 2</span>
-            <input id=\"range2From\" type=\"date\" class=\"form-control form-control-sm w-auto\" />
+
+      if(period === 'anio'){
+        html = `<select id="ctrlYear" class="form-select form-select-sm w-auto flex-shrink-0">${years.map(y=>`<option value="${y}" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`;
+        periodControls.innerHTML = html;
+        document.getElementById('ctrlYear').addEventListener('change', (e)=>{
+          updateIncome('anio', {year: e.target.value});
+        });
+        updateIncome('anio', {year: document.getElementById('ctrlYear').value});
+      } else if(period === 'mes'){
+        const currentMonth = today.getMonth() + 1;
+        html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
+               `<select id=\"ctrlMonth\" class=\"form-select form-select-sm w-auto flex-shrink-0\">` +
+               ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m,i)=>
+                 `<option value=\"${i+1}\" ${i+1===currentMonth?'selected':''}>${m}</option>`
+               ).join('') +
+               `</select>`;
+        periodControls.innerHTML = html;
+        const apply = ()=> updateIncome('mes', {year: document.getElementById('ctrlYear').value, month: document.getElementById('ctrlMonth').value});
+        document.getElementById('ctrlYear').addEventListener('change', apply);
+        document.getElementById('ctrlMonth').addEventListener('change', apply);
+        apply();
+      } else if(period === 'semana'){
+        html = `<select id=\"ctrlYear\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${years.map(y=>`<option value=\"${y}\" ${y===currentYear? 'selected':''}>${y}</option>`).join('')}</select>`+
+               `<select id=\"ctrlWeek\" class=\"form-select form-select-sm w-auto flex-shrink-0\">${range(52).map(w=>`<option value=\"${w}\">Semana ${w}</option>`).join('')}</select>`;
+        periodControls.innerHTML = html;
+        const apply = ()=> updateIncome('semana', {year: document.getElementById('ctrlYear').value, week: document.getElementById('ctrlWeek').value});
+        document.getElementById('ctrlYear').addEventListener('change', apply);
+        document.getElementById('ctrlWeek').addEventListener('change', apply);
+        apply();
+      } else if(period === 'dia'){
+        const todayISO = toISO(today);
+        html = `<input id=\"ctrlDate\" type=\"date\" class=\"form-control form-control-sm w-auto flex-shrink-0\" value=\"${todayISO}\" />`;
+        periodControls.innerHTML = html;
+        const apply = ()=> updateIncome('dia', {date: document.getElementById('ctrlDate').value});
+        document.getElementById('ctrlDate').addEventListener('change', apply);
+        apply();
+      } else if(period === 'rango'){
+        html = `
+          <div class=\"d-flex align-items-center gap-2 flex-wrap\">
+            <span class=\"small text-muted\">Rango 1</span>
+            <input id=\"range1From\" type=\"date\" class=\"form-control form-control-sm w-auto\" value=\"${defaultFrom}\" />
             <span class=\"small\">a</span>
-            <input id=\"range2To\" type=\"date\" class=\"form-control form-control-sm w-auto\" />
+            <input id=\"range1To\" type=\"date\" class=\"form-control form-control-sm w-auto\" value=\"${defaultTo}\" />
+            <div class=\"form-check form-check-inline ms-2\">
+              <input class=\"form-check-input\" type=\"checkbox\" id=\"compareToggle\">
+              <label class=\"form-check-label small\" for=\"compareToggle\">Comparar con otro rango</label>
+            </div>
+            <div id=\"compareControls\" class=\"d-none d-flex align-items-center gap-2 flex-wrap\">
+              <span class=\"small text-muted\">Rango 2</span>
+              <input id=\"range2From\" type=\"date\" class=\"form-control form-control-sm w-auto\" />
+              <span class=\"small\">a</span>
+              <input id=\"range2To\" type=\"date\" class=\"form-control form-control-sm w-auto\" />
+            </div>
+            <button id=\"applyRange\" class=\"btn btn-sm btn-primary\">Aplicar</button>
           </div>
-          <button id=\"applyRange\" class=\"btn btn-sm btn-primary\">Aplicar</button>
-        </div>
-      `;
-      periodControls.innerHTML = html;
-      const compareToggle = document.getElementById('compareToggle');
-      const compareControls = document.getElementById('compareControls');
-      compareToggle.addEventListener('change', (e)=>{
-        compareControls.classList.toggle('d-none', !e.target.checked);
-      });
-      const apply = ()=>{
-        const from1 = document.getElementById('range1From').value;
-        const to1 = document.getElementById('range1To').value;
-        const useCompare = document.getElementById('compareToggle').checked;
-        const from2 = useCompare ? document.getElementById('range2From').value : null;
-        const to2 = useCompare ? document.getElementById('range2To').value : null;
-        updateIncome('rango', {from1, to1, from2, to2});
-      };
-      document.getElementById('applyRange').addEventListener('click', apply);
-      apply();
+        `;
+        periodControls.innerHTML = html;
+        const compareToggle = document.getElementById('compareToggle');
+        const compareControls = document.getElementById('compareControls');
+        compareToggle.addEventListener('change', (e)=>{
+          compareControls.classList.toggle('d-none', !e.target.checked);
+        });
+        const apply = ()=>{
+          const from1 = document.getElementById('range1From').value;
+          const to1 = document.getElementById('range1To').value;
+          const useCompare = document.getElementById('compareToggle').checked;
+          const from2 = useCompare ? document.getElementById('range2From').value : null;
+          const to2 = useCompare ? document.getElementById('range2To').value : null;
+          updateIncome('rango', {from1, to1, from2, to2});
+        };
+        document.getElementById('applyRange').addEventListener('click', apply);
+        
+        // Agregar listeners para el rango 1 para que se actualice dinámicamente
+        document.getElementById('range1From').addEventListener('change', apply);
+        document.getElementById('range1To').addEventListener('change', apply);
+
+        apply();
+      }
     }
-  }
 
-  periodFilter.addEventListener('change', (e)=> renderControls(e.target.value));
-  renderControls(periodFilter.value);
-
-  // Formateo de montos en billeteras a CLP
-  document.querySelectorAll('.js-clp').forEach(el => {
-    const val = parseFloat(el.dataset.amount || 0);
-    el.textContent = fmtCLP(val);
-  });
-
-  // Donut chart for service distribution
-  new Chart(ctxDonut, {
-    type: 'doughnut',
-    data: {
-      labels: ['Realizados','Por realizar','Cancelados'],
-      datasets: [{
-        data: [{{ servicios_realizados }}, {{ servicios_por_realizar }}, {{ servicios_cancelados }}],
-        backgroundColor: ['#22c55e','#f59e0b','#ef4444']
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      cutout: '70%'
+    periodFilter.addEventListener('change', (e)=> renderControls(e.target.value));
+    
+    // ⭐ Asegurar que la lógica se ejecute al cargar la página
+    if (periodFilter.value) {
+      renderControls(periodFilter.value);
+    } else {
+      // Si no tiene valor por defecto, inicializar en 'anio'
+      periodFilter.value = 'anio';
+      renderControls('anio');
     }
-  });
 
-  // Area chart for overall activity
-  new Chart(ctxActivity, {
-    type: 'line',
-    data: {
-      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-      datasets: [{
-        label: 'Actividad',
-        data: [5,9,7,12,15,18,21,25,23,19,13,10],
-        fill: true,
-        backgroundColor: 'rgba(99,102,241,0.18)',
-        borderColor: secondary,
-        tension: .35,
-        pointRadius: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)'} }, x: { grid:{ display:false } } }
-    }
-  });
+    // -------------------------------------------------------------------------
+    // 5. OTROS GRÁFICOS (DONUT Y ACTIVITY)
+    // -------------------------------------------------------------------------
+
+    // Formateo de montos en billeteras a CLP
+    document.querySelectorAll('.js-clp').forEach(el => {
+      const val = parseFloat(el.dataset.amount || 0);
+      el.textContent = fmtCLP(val);
+    });
+
+    // Donut chart for service distribution (Ya usa datos de Django)
+    new Chart(ctxDonut, {
+      type: 'doughnut',
+      data: {
+        labels: ['Realizados','Por realizar','Cancelados'],
+        datasets: [{
+          data: [{{ servicios_realizados }}, {{ servicios_por_realizar }}, {{ servicios_cancelados }}],
+          backgroundColor: ['#22c55e','#f59e0b','#ef4444']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        cutout: '70%'
+      }
+    });
+
+    // Area chart for overall activity (Mantiene datos estáticos)
+    new Chart(ctxActivity, {
+      type: 'line',
+      data: {
+        labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+        datasets: [{
+          label: 'Actividad',
+          data: [5,9,7,12,15,18,21,25,23,19,13,10],
+          fill: true,
+          backgroundColor: 'rgba(99,102,241,0.18)',
+          borderColor: secondary,
+          tension: .35,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)'} }, x: { grid:{ display:false } } }
+      }
+    });
 </script>
 {% endblock %}
