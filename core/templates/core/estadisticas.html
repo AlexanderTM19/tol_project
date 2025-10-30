@@ -1,4 +1,4 @@
-0{% extends 'core/administrador.html' %}
+{% extends 'core/administrador.html' %}
 {% load static %}
 
 {% block title %}Estadísticas{% endblock %}
@@ -28,6 +28,17 @@
   .chart-box { position: relative; height: 300px; }
   .chart-box-sm { position: relative; height: 240px; }
   .chart-box > canvas, .chart-box-sm > canvas { width: 100% !important; height: 100% !important; }
+  /* Títulos y divisores de sección */
+  .section-title-strong { font-weight: 800; font-size: 1.15rem; color:#111827; margin: 0; }
+  .section-divider { border: 0; height: 6px; border-radius: 999px; background: linear-gradient(90deg,#0ea5e9,#6366f1,#22c55e); opacity: 1; }
+  /* Ajuste visual: elevar el card del donut para ocupar el espacio superior en pantallas grandes */
+  @media (min-width: 1200px) {
+    .donut-align-top { margin-top: -96px; }
+  }
+  /* Distribución visual del card de donut */
+  .donut-card { display: flex; flex-direction: column; height: 100%; }
+  .donut-card .chart-box-sm { flex: 1; display:flex; align-items:center; justify-content:center; height: 220px; max-width: 320px; margin: 0 auto; }
+  .donut-legend { display:flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
 </style>
 {% endblock %}
 
@@ -35,6 +46,11 @@
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Panel de estadísticas</h2>
+  </div>
+
+  <div class="mb-2">
+    <h3 class="section-title-strong">Resumen de servicios</h3>
+    <hr class="section-divider">
   </div>
 
   <!-- Top metrics -->
@@ -95,9 +111,39 @@
       </div>
     </div>
   </div>
+  <div class="mb-2">
+    <h3 class="section-title-strong">Ingresos y distribución</h3>
+    <hr class="section-divider">
+  </div>
 
+  <!-- Wallet cards arriba, con proporciones marcadas -->
+  <div class="row g-3 mb-2">
+    <div class="col-12 col-xl-4">
+      <div class="wallet-card p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="subtext">Total generado por la empresa</div>
+            <div class="value-big"><span class="js-clp" data-amount="{{ total_empresa }}"></span></div>
+          </div>
+          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4">
+      <div class="wallet-card light p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="subtext">Ingreso personal</div>
+            <div class="value-big"><span class="js-clp" data-amount="{{ ingreso_personal }}"></span></div>
+          </div>
+          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial de ingresos (8 col) + Distribución de servicios (4 col) alineado con métricas -->
   <div class="row g-3">
-    <!-- Sales dynamics / ingresos con filtro -->
     <div class="col-12 col-lg-8">
       <div class="card stat-card p-3 h-100">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
@@ -122,56 +168,22 @@
         </div>
       </div>
     </div>
-
-    <!-- Right column: wallet cards -->
-    <div class="col-12 col-lg-4">
-      <div class="wallet-card p-4 mb-3">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <div class="subtext">Total generado por la empresa</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ total_empresa }}"></span></div>
-          </div>
-          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
-        </div>
-      </div>
-      <div class="wallet-card light p-4">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <div class="subtext">Ingreso personal</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ ingreso_personal }}"></span></div>
-          </div>
-          <div><i class="fa-solid fa-wallet fa-2x"></i></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row g-3 mt-1">
-    <!-- Doughnut chart: distribución de servicios -->
-    <div class="col-12 col-lg-4">
-      <div class="card stat-card p-3 h-100">
+    <div class="col-12 col-lg-4 donut-align-top">
+      <div class="card stat-card p-3 h-100 donut-card">
         <div class="section-header mb-2">Distribución de servicios</div>
         <div class="chart-box-sm">
           <canvas id="servicesDonut"></canvas>
         </div>
-        <div class="mt-3 small">
+        <div class="mt-3 small donut-legend">
           <span class="legend-dot" style="background:#22c55e"></span> Realizados
           <span class="legend-dot ms-3" style="background:#f59e0b"></span> Por realizar
           <span class="legend-dot ms-3" style="background:#ef4444"></span> Cancelados
         </div>
       </div>
     </div>
-
-    <!-- Area chart: actividad general -->
-    <div class="col-12 col-lg-8">
-      <div class="card stat-card p-3 h-100">
-        <div class="section-header mb-2">Actividad general</div>
-        <div class="chart-box">
-          <canvas id="activityChart"></canvas>
-        </div>
-      </div>
-    </div>
   </div>
+
+  <!-- (Se reubicó la Distribución de servicios a la derecha del historial) -->
 </div>
 {% endblock %}
 
@@ -194,7 +206,6 @@
 
     const ctxIncome = document.getElementById('incomeChart');
     const ctxDonut = document.getElementById('servicesDonut');
-    const ctxActivity = document.getElementById('activityChart');
 
     const primary = '#0ea5e9', secondary = '#6366f1';
 
@@ -412,7 +423,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // 5. OTROS GRÁFICOS (DONUT Y ACTIVITY)
+    // 5. OTRO GRÁFICO (DONUT)
     // -------------------------------------------------------------------------
 
     // Formateo de montos en billeteras a CLP
@@ -439,27 +450,119 @@
       }
     });
 
-    // Area chart for overall activity (Mantiene datos estáticos)
-    new Chart(ctxActivity, {
-      type: 'line',
-      data: {
-        labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-        datasets: [{
-          label: 'Actividad',
-          data: [5,9,7,12,15,18,21,25,23,19,13,10],
-          fill: true,
-          backgroundColor: 'rgba(99,102,241,0.18)',
-          borderColor: secondary,
-          tension: .35,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)'} }, x: { grid:{ display:false } } }
+    // (Se eliminó el gráfico de "Actividad general")
+
+    // -------------------------------------------------------------------------
+    // 6. EXPORTAR A EXCEL (usa datos actuales del gráfico + filtro)
+    // -------------------------------------------------------------------------
+
+    function buildFilenameFromFilters() {
+      const period = (document.getElementById('periodFilter')?.value || 'anio');
+      let suffix = '';
+      try {
+        if (period === 'anio') {
+          const y = document.getElementById('ctrlYear')?.value;
+          suffix = `anio_${y || ''}`;
+        } else if (period === 'mes') {
+          const y = document.getElementById('ctrlYear')?.value;
+          const m = document.getElementById('ctrlMonth')?.value;
+          suffix = `mes_${m || ''}_${y || ''}`;
+        } else if (period === 'semana') {
+          const y = document.getElementById('ctrlYear')?.value;
+          const w = document.getElementById('ctrlWeek')?.value;
+          suffix = `semana_${w || ''}_${y || ''}`;
+        } else if (period === 'dia') {
+          const d = document.getElementById('ctrlDate')?.value;
+          suffix = `dia_${d || ''}`;
+        } else if (period === 'rango') {
+          const f1 = document.getElementById('range1From')?.value;
+          const t1 = document.getElementById('range1To')?.value;
+          const cmp = document.getElementById('compareToggle')?.checked;
+          const f2 = cmp ? (document.getElementById('range2From')?.value) : null;
+          const t2 = cmp ? (document.getElementById('range2To')?.value) : null;
+          suffix = `rango_${f1 || ''}_a_${t1 || ''}` + (cmp && f2 && t2 ? `_vs_${f2}_a_${t2}` : '');
+        }
+      } catch (_) {}
+      const clean = (suffix || 'ingresos').replace(/[^0-9A-Za-z_\-]/g, '_');
+      return `ingresos_${clean}.xlsx`;
+    }
+
+    function getHeaderTitleForFirstColumn() {
+      const period = (document.getElementById('periodFilter')?.value || 'anio');
+      if (period === 'anio') return 'Mes';
+      if (period === 'mes') return 'Día';
+      if (period === 'semana') return 'Día';
+      if (period === 'dia') return 'Hora';
+      if (period === 'rango') return 'Fecha';
+      return 'Día';
+    }
+
+    function exportIncomeChartToExcel() {
+      if (!incomeChart || !incomeChart.data) {
+        alert('No hay datos para exportar.');
+        return;
       }
-    });
-</script>
-{% endblock %}
+      const labels = incomeChart.data.labels || [];
+      const datasets = incomeChart.data.datasets || [];
+      const hasData = datasets.length && labels.length && datasets.some(ds => (ds.data || []).some(v => v !== null && v !== 0));
+      if (!hasData) {
+        alert('No hay datos para exportar con el filtro actual.');
+        return;
+      }
+
+      // Armar matriz AOA: primera fila cabeceras
+      const header = [getHeaderTitleForFirstColumn(), ...datasets.map(ds => (ds.label || 'Serie'))];
+      const rows = [header];
+      for (let i = 0; i < labels.length; i++) {
+        const row = [labels[i]];
+        for (const ds of datasets) {
+          const v = (ds.data && ds.data[i] != null) ? ds.data[i] : null;
+          // Convertir de miles de CLP a CLP completos para exportar
+          const valueCLP = (typeof v === 'number') ? Math.round(v * 1000) : null;
+          row.push(valueCLP);
+        }
+        rows.push(row);
+      }
+
+      // Crear libro y hoja usando SheetJS (XLSX debe estar cargado por CDN)
+      if (typeof XLSX === 'undefined' || !XLSX.utils) {
+        console.error('Librería XLSX no disponible.');
+        alert('No se pudo exportar: librería XLSX no cargada.');
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const note = [['Nota: Los montos están expresados en CLP']];
+      const ws = XLSX.utils.aoa_to_sheet(note);
+      XLSX.utils.sheet_add_aoa(ws, rows, { origin: 'A3' });
+
+      // Aplicar formato de moneda a las columnas de montos (desde B hasta el final)
+      try {
+        const ref = ws['!ref'];
+        if (ref) {
+          const range = XLSX.utils.decode_range(ref);
+          const headerRow = 2; // A3 -> row index 2 (0-based)
+          for (let r = headerRow + 1; r <= range.e.r; r++) { // datos desde la fila siguiente al header
+            for (let c = 1; c <= range.e.c; c++) { // columnas B..fin
+              const addr = XLSX.utils.encode_cell({ r, c });
+              const cell = ws[addr];
+              if (cell && typeof cell.v === 'number') {
+                cell.t = 'n';
+                cell.z = '$#,##0'; // Excel aplicará separador de miles según configuración regional
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo aplicar formato de moneda:', e);
+      }
+      XLSX.utils.book_append_sheet(wb, ws, 'Ingresos');
+      const filename = buildFilenameFromFilters();
+      XLSX.writeFile(wb, filename);
+    }
+
+    const btnExport = document.getElementById('btnExportExcel');
+    if (btnExport) {
+      btnExport.addEventListener('click', exportIncomeChartToExcel);
+    }
+  </script>
+  {% endblock %}
