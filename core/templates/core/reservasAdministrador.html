@@ -341,6 +341,18 @@
                         <select class="form-select" id="choferSeleccionado" required>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="MontoSeleccionado" class="form-label">Monto</label>
+                        <input 
+                        type="number" 
+                        class="form-control" 
+                        id="MontoSeleccionado" 
+                        name="MontoSeleccionado"
+                        required 
+                        min="0"
+                        placeholder="Ingrese el monto"
+                    >
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -569,6 +581,7 @@
         const seleccionarChoferModal = new bootstrap.Modal(document.getElementById('seleccionarChoferModal'));
         const confirmarAsignacionBtn = document.getElementById('confirmarAsignacionBtn');
         const choferSeleccionadoSelect = document.getElementById('choferSeleccionado');
+        const montoInput = document.getElementById('MontoSeleccionado');
         const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
         let reservasWeb = [];
         let reservaPendiente = null;
@@ -671,16 +684,26 @@
         }
 
         // Maneja la asignación del chofer y la adición al calendario
+        // Maneja la asignación del chofer y la adición al calendario
         confirmarAsignacionBtn.addEventListener('click', function () {
             const choferSeleccionado = choferSeleccionadoSelect.value;
-            if (choferSeleccionado && reservaPendiente) {
-                aceptarReservaWeb(reservaPendiente.id, choferSeleccionado);
+            
+            // ⭐ 1. Obtener y validar el valor del monto
+            const montoAsignado = parseInt(montoInput.value, 10); 
+            
+            // Añade la validación del monto: debe ser un número válido y existir una reserva pendiente
+            if (choferSeleccionado && reservaPendiente && !isNaN(montoAsignado) && montoAsignado >= 0) {
+                
+                // ⭐ 2. Pasar el monto a la función aceptarReservaWeb
+                aceptarReservaWeb(reservaPendiente.id, choferSeleccionado, montoAsignado); 
+                
             } else {
-                alert('Debe seleccionar un chofer.');
+                alert('Debe seleccionar un chofer y especificar un monto válido (mayor o igual a 0).');
             }
         });
 
-        async function aceptarReservaWeb(reservaId, choferId) {
+        // ⭐ 3. La función ahora acepta el argumento 'monto'
+        async function aceptarReservaWeb(reservaId, choferId, monto) { 
             try {
                 const respuesta = await fetch('{% url 'aceptar_reserva_web' %}', {
                     method: 'POST',
@@ -691,6 +714,9 @@
                     body: JSON.stringify({
                         reserva_id: reservaId,
                         chofer_id: choferId,
+                        
+                        // ⭐ 4. Incluir el monto en el cuerpo de la solicitud POST
+                        monto_tarifa: monto, 
                     }),
                 });
 
@@ -715,6 +741,10 @@
 
                     choferSeleccionadoSelect.selectedIndex = 0;
                     reservaPendiente = null;
+                    
+                    // Opcional: limpiar el campo de monto después de una asignación exitosa
+                    montoInput.value = ''; 
+                    
                     alert('Reserva aceptada y asignada al calendario con éxito.');
                 } else {
                     alert(datos.mensaje || 'No se pudo aceptar la reserva.');

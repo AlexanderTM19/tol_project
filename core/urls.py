@@ -28,6 +28,13 @@ urlpatterns = [
     path('administrador/form_modpro/<id>',views.form_modpro, name='form_modpro'),
     path('administrador/', views.admin_config, name='admin_config'),
     path('administrador/estadisticas', views.estadisticas, name='estadisticas'),
+    path('administrador/estadisticas/data/', views.estadisticas_data, name='estadisticas_data'),
+    # Ruta API para el filtro por AÑO (que mencionamos antes)
+    path('api/ingresos/anual/<int:year>/', views.api_ingresos_anual, name='api_ingresos_anual'),
+    
+    # ⭐ NUEVA RUTA API para el filtro por MES
+    path('api/ingresos/mensual/<int:year>/<int:month>/', views.api_ingresos_mensual, name='api_ingresos_mensual'),
+    
     path('administrador/reservas-web/pendientes', views.reservas_web_pendientes, name='reservas_web_pendientes'),
     path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
     path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),

@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Sum
 from faker import Faker
 from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm,TrasporteForm
 from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb,Trasporte
@@ -12,9 +13,10 @@ import json
 from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.utils.dateformat import DateFormat 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 from django.utils import timezone
 from django.contrib import messages 
 
@@ -245,6 +247,197 @@ def clientes(request):
     return render(request, 'core/clientesAdministrador.html', {"clientes": Listado_clientes})
 
 #-------------------------------------------------------------------------------------------------------------------------------
+def api_ingresos_mensual(request, year, month):
+    """
+    Devuelve los ingresos (Monto_tarifa) por día para un mes y año específicos,
+    para alimentar el filtro 'mes' del gráfico.
+    """
+    
+    try:
+        # 1. Obtener la suma de ingresos por día
+        ingresos_por_dia = Reservas.objects.filter(
+            Fecha__year=year,
+            Fecha__month=month,
+            estado='REALIZADO'
+        ).values('Fecha__day').annotate(total=Sum('Monto_tarifa')).order_by('Fecha__day')
+        
+        # Calcular cuántos días tiene ese mes (para inicializar el array)
+        if year > 0 and month >= 1 and month <= 12:
+            try:
+                # Usamos el día 1 del mes siguiente menos un día (día 0)
+                # para obtener el último día del mes actual.
+                dias_en_mes = (datetime(year, month % 12 + 1, 1) - datetime(year, month, 1)).days if month < 12 else 31
+            except ValueError:
+                # Si el mes es 12, calcular días de diciembre
+                dias_en_mes = 31
+        else:
+            return JsonResponse({'error': 'Parámetros de fecha inválidos'}, status=400)
+
+        ingresos_data = [0] * dias_en_mes
+        
+        # 2. Llenar el array de datos
+        for item in ingresos_por_dia:
+            # Los días en Django son 1-N. El índice del array es 0-(N-1).
+            monto_en_miles = (item['total'] or 0) / 1000
+            ingresos_data[item['Fecha__day'] - 1] = round(monto_en_miles, 2)
+            
+        # 3. Devolver los datos en formato JSON
+        return JsonResponse({'ingresos': ingresos_data})
+        
+    except Exception as e:
+        # Manejo básico de errores de servidor/DB
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def api_ingresos_anual(request, year):
+    """Devuelve los ingresos (Monto_tarifa) por mes para un año específico.
+    Responde con JSON { 'labels': [...], 'ingresos': [...] } donde los ingresos están en 'miles' (divididos por 1000).
+    """
+    try:
+        ingresos_por_mes = Reservas.objects.filter(
+            Fecha__year=year,
+            estado='REALIZADO'
+        ).values('Fecha__month').annotate(total=Sum('Monto_tarifa')).order_by('Fecha__month')
+
+        meses_nombre = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+        ingresos_data = [0] * 12
+        for item in ingresos_por_mes:
+            idx = item.get('Fecha__month', 1) - 1
+            ingresos_data[idx] = round(((item.get('total') or 0) / 1000), 2)
+
+        return JsonResponse({'labels': meses_nombre, 'ingresos': ingresos_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(es_admin)
+@require_GET
+def estadisticas_data(request):
+    """Endpoint genérico que devuelve etiquetas y datasets para el gráfico de ingresos.
+    Parámetros GET:
+      - period: 'anio'|'mes'|'semana'|'dia'|'rango' (default 'anio')
+      - year, month, week, date, from1, to1, from2, to2 según el periodo
+    Respuesta JSON: { labels: [...], datasets: [ { label, data }, ... ] }
+    Los montos se devuelven en 'miles' (divididos por 1000) para coincidir con la UI.
+    """
+    period = request.GET.get('period', 'anio')
+    try:
+        now = datetime.now().date()
+        if period == 'anio':
+            year = int(request.GET.get('year', now.year))
+            labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+            values = [0] * 12
+            q = Reservas.objects.filter(estado='REALIZADO', Fecha__year=year).values('Fecha__month').annotate(total=Sum('Monto_tarifa'))
+            for it in q:
+                m = int(it.get('Fecha__month', 1)) - 1
+                values[m] = round(((it.get('total') or 0) / 1000), 2)
+            datasets = [{ 'label': f'Ingresos {year}', 'data': values }]
+            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+
+        if period == 'mes':
+            year = int(request.GET.get('year', now.year))
+            month = int(request.GET.get('month', now.month))
+            from calendar import monthrange
+            dim = monthrange(year, month)[1]
+            labels = [str(i) for i in range(1, dim+1)]
+            values = [0] * dim
+            q = Reservas.objects.filter(estado='REALIZADO', Fecha__year=year, Fecha__month=month).values('Fecha__day').annotate(total=Sum('Monto_tarifa'))
+            for it in q:
+                d = int(it.get('Fecha__day', 1)) - 1
+                if 0 <= d < dim:
+                    values[d] = round(((it.get('total') or 0) / 1000), 2)
+            datasets = [{ 'label': f'Ingresos {month}/{year}', 'data': values }]
+            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+
+        if period == 'semana':
+            # esperar year y week (ISO week number)
+            year = int(request.GET.get('year', now.year))
+            week = int(request.GET.get('week', now.isocalendar()[1]))
+            import datetime as _dt
+            monday = _dt.date.fromisocalendar(year, week, 1)
+            labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
+            values = []
+            for i in range(7):
+                day = monday + _dt.timedelta(days=i)
+                total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                values.append(round((total / 1000), 2))
+            datasets = [{ 'label': f'Ingresos semana {week}/{year}', 'data': values }]
+            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+
+        if period == 'dia':
+            date_str = request.GET.get('date', now.isoformat())
+            try:
+                d = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except Exception:
+                d = now
+            labels = [f"{h}:00" for h in range(24)]
+            values = [0] * 24
+            q = Reservas.objects.filter(estado='REALIZADO', Fecha=d)
+            for r in q:
+                try:
+                    h = int(r.Hora.hour)
+                    if 0 <= h < 24:
+                        values[h] += (r.Monto_tarifa or 0)
+                except Exception:
+                    continue
+            values = [ round((v / 1000), 2) for v in values ]
+            datasets = [{ 'label': f'Ingresos {d.isoformat()}', 'data': values }]
+            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+
+        if period == 'rango':
+            def parse_date(s):
+                try:
+                    return datetime.strptime(s, '%Y-%m-%d').date()
+                except Exception:
+                    return None
+
+            from1 = request.GET.get('from1')
+            to1 = request.GET.get('to1')
+            from2 = request.GET.get('from2')
+            to2 = request.GET.get('to2')
+
+            d1 = parse_date(from1)
+            d2 = parse_date(to1)
+            labels = []
+            datasets = []
+            if d1 and d2 and d1 <= d2:
+                days = (d2 - d1).days + 1
+                labels = [f'Día {i+1}' for i in range(days)]
+                vals = []
+                for i in range(days):
+                    day = d1 + timedelta(days=i)
+                    total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                    vals.append(round((total / 1000), 2))
+                datasets.append({ 'label': f'Rango 1 ({d1} a {d2})', 'data': vals })
+
+            if from2 and to2:
+                d3 = parse_date(from2)
+                d4 = parse_date(to2)
+                if d3 and d4 and d3 <= d4:
+                    days2 = (d4 - d3).days + 1
+                    # asegurar labels lo suficientemente largos
+                    maxlen = max(len(labels), days2)
+                    if len(labels) < maxlen:
+                        labels = labels + [f'Día {i+1}' for i in range(len(labels), maxlen)]
+                    vals2 = []
+                    for i in range(days2):
+                        day = d3 + timedelta(days=i)
+                        total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                        vals2.append(round((total / 1000), 2))
+                    # pad
+                    if len(vals2) < maxlen:
+                        vals2 = vals2 + [None] * (maxlen - len(vals2))
+                    datasets.append({ 'label': f'Rango 2 ({d3} a {d4})', 'data': vals2 })
+
+            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+
+        # default: vacío
+        return JsonResponse({ 'labels': [], 'datasets': [] })
+
+    except Exception as e:
+        return JsonResponse({ 'error': str(e) }, status=500)
+#-------------------------------------------------------------------------------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
 def estadisticas(request):
@@ -259,13 +452,38 @@ def estadisticas(request):
     clientes_frecuentes = Clientes.objects.filter(Cantidad_viajes__gt=0).count()
 
     # Totales monetarios: sumar Monto_tarifa de Reservas REALIZADO
-    from django.db.models import Sum
     total_empresa_agg = Reservas.objects.filter(estado='REALIZADO').aggregate(total=Sum('Monto_tarifa'))
     total_empresa = total_empresa_agg.get('total') or 0
 
-    # Ingreso personal: no hay campo que indique origen del dinero (empresa/personal).
-    # Usamos una estimación por defecto del 20% del total (esta suposición se puede ajustar).
+    # Ingreso personal: estimación (esta suposición se mantiene por ahora).
     ingreso_personal = int(total_empresa * 0.20)
+
+    # ----------------------------------------------------------------------
+    # ⭐ MODIFICACIONES PARA EL GRÁFICO DE INGRESOS MENSUALES
+    # ----------------------------------------------------------------------
+    
+    current_year = datetime.now().year
+    
+    # 1. Obtener la suma de ingresos por mes del año actual
+    # Usamos __year y __month para agrupar por mes y año
+    ingresos_por_mes = Reservas.objects.filter(
+        Fecha__year=current_year,
+        estado='REALIZADO'
+    ).values('Fecha__month').annotate(total=Sum('Monto_tarifa')).order_by('Fecha__month')
+    
+    # 2. Preparar los datos en formato de lista para el JSON
+    meses_nombre = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+    ingresos_data = [0] * 12 # Inicializar 12 meses a 0
+    
+    for item in ingresos_por_mes:
+        # Los meses en Django son 1-12. El índice del array es 0-11.
+        # Dividimos por 1000 para que el gráfico muestre "CLP - miles" (como lo pide tu JS)
+        monto_en_miles = (item['total'] or 0) / 1000
+        ingresos_data[item['Fecha__month'] - 1] = round(monto_en_miles, 2)
+        
+    # 3. Serializar los datos a JSON strings
+    ingresos_mensuales_json = json.dumps(ingresos_data)
+    etiquetas_meses_json = json.dumps(meses_nombre)
 
     contexto = {
         'servicios_realizados': servicios_realizados,
@@ -275,9 +493,13 @@ def estadisticas(request):
         'clientes_frecuentes': clientes_frecuentes,
         'total_empresa': total_empresa,
         'ingreso_personal': ingreso_personal,
+        
+        # ⭐ Añadir los datos del gráfico al contexto
+        'ingresos_mensuales_json': ingresos_mensuales_json,
+        'etiquetas_meses_json': etiquetas_meses_json,
     }
+    
     return render(request, 'core/estadisticas.html', contexto)
-
 #-------------------------------------------------------------------------------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
@@ -791,13 +1013,25 @@ def aceptar_reserva_web(request):
 
     reserva_id = datos.get('reserva_id')
     chofer_id = datos.get('chofer_id')
+    
+    # ⭐ MODIFICACIÓN 1: Obtener el monto de la solicitud JSON
+    monto_tarifa = datos.get('monto_tarifa') 
 
-    if not reserva_id or not chofer_id:
-        return JsonResponse({'exito': False, 'mensaje': 'Datos incompletos'}, status=400)
+    if not reserva_id or not chofer_id or monto_tarifa is None:
+        # Nota: monto_tarifa se valida como 'is None' porque podría ser 0
+        return JsonResponse({'exito': False, 'mensaje': 'Datos incompletos (reserva, chofer o monto faltantes)'}, status=400)
+
+    try:
+        # Convertir monto a entero, asumiendo que el campo en el modelo es IntegerField
+        monto_tarifa = int(monto_tarifa)
+    except (ValueError, TypeError):
+        return JsonResponse({'exito': False, 'mensaje': 'Monto de tarifa inválido'}, status=400)
+
 
     reserva_web = get_object_or_404(ReservasWeb, pk=reserva_id)
     chofer = get_object_or_404(Conductores.objects.select_related('usuario'), pk=chofer_id)
 
+    # Crear la nueva reserva confirmada
     reserva_confirmada = Reservas.objects.create(
         Nombre_Cliente=reserva_web.Nombre_Cliente,
         Apellidos_Cliente=reserva_web.Apellidos_Cliente,
@@ -805,6 +1039,10 @@ def aceptar_reserva_web(request):
         Correo=reserva_web.Correo,
         Origen=reserva_web.Origen,
         Destino=reserva_web.Destino,
+        
+        # ⭐ MODIFICACIÓN 2: Asignar el monto
+        Monto_tarifa=monto_tarifa, 
+        
         Dirrecion=reserva_web.Dirrecion,
         Fecha=reserva_web.Fecha,
         Hora=reserva_web.Hora,
@@ -812,8 +1050,10 @@ def aceptar_reserva_web(request):
         Cantidad_maletas=reserva_web.Cantidad_maletas,
         Confirmacion=True,
         Chofer_asignado=chofer,
+        # Nota: El estado por defecto ('PENDIENTE') se mantiene a menos que lo especifiques aquí.
     )
 
+    # Preparar el objeto evento para el calendario
     evento = {
         'id': str(reserva_confirmada.Id_reserva),
         'title': f"Reserva - {reserva_confirmada.Nombre_Cliente} {reserva_confirmada.Apellidos_Cliente}".strip(),
@@ -824,16 +1064,17 @@ def aceptar_reserva_web(request):
             'clienteCorreo': reserva_confirmada.Correo or '',
             'desde': reserva_confirmada.Origen.Nombre_Comuna if reserva_confirmada.Origen else '',
             'hasta': reserva_confirmada.Destino.Nombre_Comuna if reserva_confirmada.Destino else '',
+            'monto': str(reserva_confirmada.Monto_tarifa), # Opcional: incluir el monto en el evento
             'chofer': f"{chofer.usuario.Nombres} {chofer.usuario.Apellidos}".strip(),
             'estado': reserva_confirmada.estado or 'PENDIENTE',
         },
         'classNames': [f"evt-{(reserva_confirmada.estado or '').lower()}"] if reserva_confirmada.estado else [],
     }
 
+    # Eliminar la reserva web original
     reserva_web.delete()
 
     return JsonResponse({'exito': True, 'evento': evento})
-
 
 @login_required
 @user_passes_test(es_admin)
