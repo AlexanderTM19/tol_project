@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-giff@62em9^3)4f#=7eb$c+9avun=!+u-4%k#1xoa-ftz%^q0u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.ngrok-free.dev']
 
 
 # Application definition
@@ -38,16 +38,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://mandi-precostal-imagistically.ngrok-free.dev"
+]
+# ⭐ AÑADE ESTA CONFIGURACIÓN PARA CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',  # Comodín para ngrok (recomendado)
+    # O, de forma específica:
+    # 'https://mandi-precostal-imagistically.ngrok-free.dev' 
 ]
 
 ROOT_URLCONF = 'tol_project.urls'
