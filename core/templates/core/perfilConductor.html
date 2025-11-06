@@ -79,7 +79,11 @@
 
 {% block content %}
 <div class="profile-card fade-in">
-	<img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Foto de perfil" class="profile-avatar">
+	{% if conductor.img_foto_perfil %}
+		<img src="{{ conductor.img_foto_perfil.url }}" alt="Foto de perfil" class="profile-avatar">
+	{% else %}
+		<img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Foto de perfil" class="profile-avatar">
+	{% endif %}
 	<div class="profile-name">{{ conductor.usuario.Nombres }} {{ conductor.usuario.Apellidos }}</div>
 	<div class="profile-role">Conductor Oficial</div>
 	<div class="profile-info">
