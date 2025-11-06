@@ -106,6 +106,15 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12">
+                                    <div class="form-field">
+                                        <label for="nro_Vuelo-cliente" class="field-label">Numero de vuelo del cliente:</label>
+                                        <input type="text" name="nro_Vuelo" class="form-input" id="nro_Vuelo-cliente"
+                                            placeholder="Ingrese su numero de vuelo para poder estar atento ante cualquier inconveniente" required>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="form-field">
@@ -263,6 +272,7 @@
                 Origen: origenSelect.value || null,
                 Destino: destinoSelect.value || null,
                 Dirrecion: document.getElementById('direccion-cliente').value.trim(),
+                nro_Vuelo: document.getElementById('nro_Vuelo-cliente').value.trim(),
                 Fecha: fecha,
                 Hora: hora,
                 Cantidad_pasajeros: document.getElementById('personas-select').value,
