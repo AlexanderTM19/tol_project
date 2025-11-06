@@ -181,6 +181,7 @@ class ReservasWeb(models.Model):
     Apellidos_Cliente = models.CharField(max_length=50, blank=True, default="")
     Telefono = models.CharField(max_length=20, null=False)
     Correo = models.EmailField(blank=True, null=True)
+    nro_vuelo = models.CharField(max_length=6, blank=True, null=True)
     Origen = models.ForeignKey(
         Tarifas,
         on_delete=models.SET_NULL,
