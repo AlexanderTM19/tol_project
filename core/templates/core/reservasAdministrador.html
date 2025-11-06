@@ -29,11 +29,40 @@
                     <span class="legend-item legend-realizado">Realizado</span>
                     <span class="legend-item legend-cancelado">Cancelado</span>
                 </div>
-                <div class="text-muted small">
-                    Click en un evento para ver detalles
+                <div class="flex-grow-1 d-flex justify-content-end">
+                    <div class="mui-tabs" role="tablist" aria-label="Cambiar vista">
+                        <button id="tabCalendario" type="button" class="mui-tab mui-tab--active" role="tab" aria-selected="true">Calendario</button>
+                        <button id="tabLista" type="button" class="mui-tab" role="tab" aria-selected="false">Lista</button>
+                        <span id="tabsIndicator" class="mui-tabs-indicator"></span>
+                    </div>
                 </div>
             </div>
-            <div id="calendar"></div>
+            <!-- Vistas -->
+            <div id="vistaCalendario" class="view-visible">
+                <div id="calendar"></div>
+            </div>
+            <div id="vistaLista" class="view-hidden">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Nro Vuelo</th>
+                                <th>Desde</th>
+                                <th>Hasta</th>
+                                <th>Chofer</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservasListTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -453,6 +482,45 @@
 
     /* Modal width helper */
     .modal-full-width { max-width: 80%; width: 80%; }
+
+    /* MUI-like Tabs */
+    .mui-tabs {
+        position: relative;
+        display: inline-flex;
+        gap: .75rem;
+        background: rgba(13,110,253,.06);
+        padding: .25rem;
+        border-radius: 12px;
+        align-items: center;
+    }
+    .mui-tab {
+        position: relative;
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: .55rem 1rem;
+        font-weight: 600;
+        color: #6c757d;
+        border-radius: 10px;
+        transition: color .2s ease, background-color .2s ease;
+    }
+    .mui-tab:hover { background: rgba(13,110,253,.08); color: #0b5ed7; }
+    .mui-tab--active { color: #0d6efd; }
+    .mui-tabs-indicator {
+        position: absolute;
+        bottom: .25rem;
+        height: 3px;
+        background: #0d6efd;
+        border-radius: 3px;
+        transition: transform .25s ease, width .25s ease;
+        transform: translateX(0);
+        width: 0;
+        left: 0;
+    }
+
+    /* Toggle helpers to avoid display:none on calendar wrapper */
+    .view-hidden { position: absolute; left: -99999px; top: -99999px; opacity: 0; pointer-events: none; height: 0; overflow: hidden; width: 100%; }
+    .view-visible { position: relative; opacity: 1; height: auto; }
 </style>
 {% endblock %}
 
@@ -465,6 +533,30 @@
         var reservasIniciales = JSON.parse('{{ reservas_json|escapejs }}');
         var calendarEl = document.getElementById('calendar');
         var choferesDisponibles = JSON.parse('{{ choferes_json|escapejs }}');
+
+        // Función para poblar y mostrar el modal de detalle desde un evento del calendario
+        function mostrarModalEvento(event){
+            var modal = new bootstrap.Modal(document.getElementById('infoReservaModal'));
+            var start = event.start || null;
+            var formattedDate = start ? start.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+            var formattedTime = start ? start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '';
+
+            document.getElementById('infoFecha').value = formattedDate;
+            document.getElementById('infoHora').value = formattedTime;
+            document.getElementById('infoClienteNombre').value = (event.extendedProps.clienteNombre || '');
+            document.getElementById('infoClienteTelefono').value = (event.extendedProps.clienteTelefono || '');
+            document.getElementById('infoClienteCorreo').value = (event.extendedProps.clienteCorreo || '');
+            var infoNroVuelo = document.getElementById('infoNroVuelo');
+            if (infoNroVuelo) { infoNroVuelo.value = event.extendedProps.nro_vuelo || ''; }
+            document.getElementById('infoDesde').value = (event.extendedProps.desde || '');
+            document.getElementById('infoHasta').value = (event.extendedProps.hasta || '');
+            document.getElementById('infoChofer').value = (event.extendedProps.chofer || '');
+            document.getElementById('infoMonto').value = (event.extendedProps.monto || '');
+            var estado = event.extendedProps.estado || '';
+            var infoEstado = document.getElementById('infoEstado');
+            if (infoEstado) { infoEstado.value = estado; }
+            modal.show();
+        }
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'es',
@@ -499,35 +591,135 @@
             // lo harías aquí con un array de eventos o cargando la lista completa
             // desde el contexto de Django.
             
-            eventClick: function (info) {
-                var event = info.event;
-                var modal = new bootstrap.Modal(document.getElementById('infoReservaModal'));
-
-                var start = event.start;
-                var formattedDate = start.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-                var formattedTime = start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-                document.getElementById('infoFecha').value = formattedDate;
-                document.getElementById('infoHora').value = formattedTime;
-                document.getElementById('infoClienteNombre').value = event.extendedProps.clienteNombre;
-                document.getElementById('infoClienteTelefono').value = event.extendedProps.clienteTelefono;
-                document.getElementById('infoClienteCorreo').value = event.extendedProps.clienteCorreo;
-                var infoNroVuelo = document.getElementById('infoNroVuelo');
-                if (infoNroVuelo) { infoNroVuelo.value = event.extendedProps.nro_vuelo || ''; }
-                document.getElementById('infoDesde').value = event.extendedProps.desde;
-                document.getElementById('infoHasta').value = event.extendedProps.hasta;
-                document.getElementById('infoChofer').value = event.extendedProps.chofer;
-                document.getElementById('infoMonto').value = event.extendedProps.monto;
-
-                var estado = event.extendedProps.estado || '';
-                var infoEstado = document.getElementById('infoEstado');
-                if (infoEstado) { infoEstado.value = estado; }
-
-                modal.show();
-            }
+            eventClick: function (info) { mostrarModalEvento(info.event); }
         });
 
         calendar.render();
+
+        // ---------- Vista de Lista de Reservas ----------
+        function escapeHtmlList(texto) {
+            if (texto === null || texto === undefined) { return ''; }
+            return texto.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderReservationsList(){
+            var tbody = document.getElementById('reservasListTableBody');
+            if (!tbody) return;
+            var events = calendar.getEvents();
+            events.sort(function(a,b){
+                var at = a.start ? a.start.getTime() : 0;
+                var bt = b.start ? b.start.getTime() : 0;
+                return at - bt;
+            });
+
+            tbody.innerHTML = '';
+            if (events.length === 0) {
+                var row = document.createElement('tr');
+                row.innerHTML = '<td colspan="11" class="text-center">No hay reservas.</td>';
+                tbody.appendChild(row);
+                return;
+            }
+
+            events.forEach(function(ev){
+                var p = ev.extendedProps || {};
+                var fecha = ev.start ? ev.start.toLocaleDateString('es-ES') : '';
+                var hora = ev.start ? ev.start.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
+                var tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtmlList(fecha)}</td>
+                    <td>${escapeHtmlList(hora)}</td>
+                    <td>${escapeHtmlList(p.clienteNombre || '')}</td>
+                    <td>${escapeHtmlList(p.clienteTelefono || '')}</td>
+                    <td>${escapeHtmlList(p.nro_vuelo || '')}</td>
+                    <td>${escapeHtmlList(p.desde || '')}</td>
+                    <td>${escapeHtmlList(p.hasta || '')}</td>
+                    <td>${escapeHtmlList(p.chofer || 'Sin asignar')}</td>
+                    <td>${escapeHtmlList(p.monto != null ? p.monto : '')}</td>
+                    <td>${escapeHtmlList(p.estado || '')}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-primary ver-detalle" data-id="${ev.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('.ver-detalle').forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    var id = this.getAttribute('data-id');
+                    var e = calendar.getEventById(id);
+                    if (e) { mostrarModalEvento(e); }
+                });
+            });
+        }
+
+        var tabCalendario = document.getElementById('tabCalendario');
+        var tabLista = document.getElementById('tabLista');
+        var tabsIndicator = document.getElementById('tabsIndicator');
+        var vistaCalendario = document.getElementById('vistaCalendario');
+        var vistaLista = document.getElementById('vistaLista');
+        // Asegurar que no usamos display:none inline (lo controla CSS con clases)
+        if (vistaLista && vistaLista.style && vistaLista.style.display === 'none') {
+            vistaLista.style.display = '';
+        }
+
+        function posicionarIndicador(){
+            var activo = document.querySelector('.mui-tab.mui-tab--active');
+            var cont = document.querySelector('.mui-tabs');
+            if (!activo || !tabsIndicator || !cont) return;
+            var rectA = activo.getBoundingClientRect();
+            var rectC = cont.getBoundingClientRect();
+            var left = rectA.left - rectC.left + cont.scrollLeft + 8; // + padding interno aprox
+            tabsIndicator.style.transform = 'translateX(' + left + 'px)';
+            tabsIndicator.style.width = (rectA.width - 16) + 'px';
+        }
+
+        function activarVista(cal){
+            if (cal) {
+                // Mostrar calendario y ocultar lista sin display:none
+                vistaCalendario.classList.remove('view-hidden');
+                vistaCalendario.classList.add('view-visible');
+                vistaLista.classList.remove('view-visible');
+                vistaLista.classList.add('view-hidden');
+                tabCalendario.classList.add('mui-tab--active');
+                tabLista.classList.remove('mui-tab--active');
+                // Recalcular tamaño/posiciones de FullCalendar al volver a ser visible
+                requestAnimationFrame(function(){
+                    requestAnimationFrame(function(){
+                        try { if (calendar) { calendar.updateSize(); calendar.render(); } } catch(e) {}
+                    });
+                });
+            } else {
+                // Mostrar lista y ocultar calendario sin display:none
+                vistaCalendario.classList.remove('view-visible');
+                vistaCalendario.classList.add('view-hidden');
+                vistaLista.classList.remove('view-hidden');
+                vistaLista.classList.add('view-visible');
+                tabLista.classList.add('mui-tab--active');
+                tabCalendario.classList.remove('mui-tab--active');
+                renderReservationsList();
+            }
+            posicionarIndicador();
+        }
+
+        if (tabCalendario && tabLista) {
+            tabCalendario.addEventListener('click', function(){ activarVista(true); });
+            tabLista.addEventListener('click', function(){ activarVista(false); });
+            window.addEventListener('resize', function(){
+                posicionarIndicador();
+                try { if (calendar) { calendar.updateSize(); } } catch(e) {}
+            });
+            // posicionar al inicio
+            setTimeout(posicionarIndicador, 0);
+        }
+
+        // Render inicial de la lista (por si el usuario cambia de vista)
+        renderReservationsList();
 
         // =========================================================================
         // LÓGICA DE ENVÍO DEL FORMULARIO (AJAX) PARA GARANTIZAR GUARDADO Y REFRESCO DEL CALENDARIO
@@ -557,8 +749,15 @@
 
                 const data = await resp.json();
                 if (data.exito) {
-                    // Agregar evento al calendario sin recargar
+                    // Agregar evento al calendario sin recargar y actualizar lista
                     if (data.evento) { calendar.addEvent(data.evento); }
+                    // Si el calendario está oculto, aseguramos un resize cuando se muestre
+                    if (vistaCalendario.classList.contains('view-hidden')) {
+                        // no-op ahora; updateSize se ejecutará al activar la vista
+                    } else {
+                        try { calendar.updateSize(); } catch(e) {}
+                    }
+                    if (typeof renderReservationsList === 'function') { renderReservationsList(); }
                     formCrearEvento.reset();
                     crearEventoModal.hide();
                 } else {
@@ -747,6 +946,7 @@
                 if (datos.exito) {
                     if (datos.evento) {
                         calendar.addEvent(datos.evento);
+                        if (typeof renderReservationsList === 'function') { renderReservationsList(); }
                     }
 
                     reservasWeb = reservasWeb.filter(r => r.id !== reservaId);
