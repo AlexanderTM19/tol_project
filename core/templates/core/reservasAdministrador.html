@@ -82,7 +82,7 @@
                             <div class="text-danger small">{{ form_reserva.Correo.errors }}</div>
                         </div>
                         <div class="col-md-6">
-                            <label for="{{ form_reserva.nro_vuelo.id_for_label }}" class="form-label">nro_vuelo del Cliente</label>
+                            <label for="{{ form_reserva.nro_vuelo.id_for_label }}" class="form-label">N° Vuelo del Cliente</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
                                 {{ form_reserva.nro_vuelo }}
@@ -246,6 +246,13 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                                 <input type="email" class="form-control" id="infoClienteCorreo" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="infoNroVuelo" class="form-label">Nro Vuelo</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-airplane"></i></span>
+                                <input type="text" class="form-control" id="infoNroVuelo" readonly>
                             </div>
                         </div>
                     </div>
@@ -505,6 +512,8 @@
                 document.getElementById('infoClienteNombre').value = event.extendedProps.clienteNombre;
                 document.getElementById('infoClienteTelefono').value = event.extendedProps.clienteTelefono;
                 document.getElementById('infoClienteCorreo').value = event.extendedProps.clienteCorreo;
+                var infoNroVuelo = document.getElementById('infoNroVuelo');
+                if (infoNroVuelo) { infoNroVuelo.value = event.extendedProps.nro_vuelo || ''; }
                 document.getElementById('infoDesde').value = event.extendedProps.desde;
                 document.getElementById('infoHasta').value = event.extendedProps.hasta;
                 document.getElementById('infoChofer').value = event.extendedProps.chofer;
