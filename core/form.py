@@ -394,7 +394,7 @@ class ReservasForm(forms.ModelForm):
         model = Reservas
         # Excluimos 'estado' para usar el valor por defecto desde la vista
         fields = [
-            'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo',
+            'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo','nro_vuelo',
             'Origen', 'Destino','Monto_tarifa', 'Dirrecion', 'Fecha', 'Hora',
             'Cantidad_pasajeros', 'Cantidad_maletas', 'Confirmacion',
             'Chofer_asignado'
@@ -404,6 +404,7 @@ class ReservasForm(forms.ModelForm):
             'Apellidos_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tus apellidos'}),
             'Telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 912345678'}),
             'Correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'opcional@ejemplo.com'}),
+            'nro_vuelo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu numero de vuelo (Ej: AB1234)'}),
             
             # Para los campos ForeignKey, se usa Select o SelectMultiple.
             # Puedes usar empty_label para que el usuario sepa que debe seleccionar
