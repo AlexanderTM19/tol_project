@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator 
+from datetime import timedelta
 
 #Modelo de los clientes 
 class Clientes(models.Model):
@@ -219,4 +220,20 @@ class ReservasWeb(models.Model):
     def __str__(self):
         return f"Reserva web de {self.Nombre_Cliente} para {self.Fecha}"
 
- 
+def default_expiration():
+    return timezone.now() + timedelta(hours=1)
+
+
+# Token de reseteo de contraseñas
+class PasswordResetToken(models.Model):
+    usuario = models.ForeignKey(Usuarios, on_delete=models.CASCADE, related_name='tokens_reset')
+    token = models.CharField(max_length=64, unique=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    expira_en = models.DateTimeField(default=default_expiration)
+    usado = models.BooleanField(default=False)
+
+    def esta_vigente(self):
+        return not self.usado and self.expira_en > timezone.now()
+
+    def __str__(self):
+        return f"Token reset para {self.usuario.Rut}"
