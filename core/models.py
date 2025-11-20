@@ -144,7 +144,7 @@ class Reservas(models.Model):
     Apellidos_Cliente = models.CharField(max_length=50, null=False)
     Telefono = models.CharField(max_length=20, null=False)
     Correo = models.EmailField(blank=True, null=True)
-    nro_vuelo = models.CharField(max_length=6,blank=True, null=True)
+      = models.CharField(max_length=6,blank=True, null=True)
     Origen = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_origen')
     Destino = models.ForeignKey(Tarifas, on_delete=models.SET_NULL, null=True, blank=True,related_name='reservas_como_destino')
     Monto_tarifa = models.IntegerField(null=True, blank=True, default=0)
