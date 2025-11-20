@@ -1,4 +1,4 @@
-# En tu archivo core/forms.py
+﻿# En tu archivo core/forms.py
 from django import forms
 from .models import Clientes, Rol_usuario, Usuarios, Conductores, Vehiculos, Trasporte, Tarifas, Reservas, ReservasWeb
 from django.core.validators import MinValueValidator, MaxValueValidator 
@@ -31,9 +31,9 @@ class ClientesForm(forms.ModelForm):
             ),
             'Telefono': forms.TextInput(
                 attrs={
-                    'placeholder': 'Debe ingresar teléfono',
+                    'placeholder': 'Debe ingresar telÃ©fono',
                     'class': 'form-control',
-                    'type': 'tel' # Usa 'tel' para teléfonos
+                    'type': 'tel' # Usa 'tel' para telÃ©fonos
                 }
             ),
             'Correo': forms.EmailInput( # Usa EmailInput para correos
@@ -43,12 +43,12 @@ class ClientesForm(forms.ModelForm):
                 }
             ),
             # El campo 'Cantidad_viajes' no necesita un widget si es solo de lectura
-            # El campo 'Recurrente' ya está bien
+            # El campo 'Recurrente' ya estÃ¡ bien
             'Recurrente': forms.CheckboxInput(
                 attrs={'class': 'form-check-input'}
             )
         }
-    # Asegurar estilo consistente en Cantidad_viajes si está presente en el modelo
+    # Asegurar estilo consistente en Cantidad_viajes si estÃ¡ presente en el modelo
     Cantidad_viajes = forms.IntegerField(
         required=True,
         widget=forms.NumberInput(attrs={'class': 'form-control'})
@@ -61,7 +61,7 @@ class Rol_Form(forms.ModelForm):
         # Incluye solo los campos que quieres que el usuario edite
         fields = ['nombre_Rol'] 
         
-        # Opcional: añade widgets para mejorar la apariencia y experiencia
+        # Opcional: aÃ±ade widgets para mejorar la apariencia y experiencia
         widgets = {
             'nombre_Rol': forms.TextInput(
                 attrs={
@@ -120,32 +120,75 @@ class UsuariosForm(forms.ModelForm):
         }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-
 class CustomLoginForm(forms.Form):
     username = forms.CharField(
         label="Rut",
         max_length=9,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Ingrese su Rut sin puntos ni guion, Ej: 123456789'
+            "class": "form-control",
+            "placeholder": "Ingrese su Rut sin puntos ni guión, Ej: 123456789"
         })
     )
     password = forms.CharField(
         label="Contraseña",
         max_length=15,
         widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Ingrese su contraseña'
+            "class": "form-control",
+            "placeholder": "Ingrese su contraseña"
         })
     )
-    # Se agrega el campo de recordar contraseña como un CheckboxInput
     recuerdame = forms.BooleanField(
-        required=False, 
+        required=False,
         label="Recordar contraseña",
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
     )
 #-------------------------------------------------------------------------------------------------------------------------------
+# Formulario de solicitud de reset de contraseña
+class PasswordResetRequestForm(forms.Form):
+    rut = forms.CharField(
+        label="Rut",
+        max_length=12,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Ingrese su Rut sin puntos ni guión"
+        })
+    )
+    correo = forms.EmailField(
+        label="Correo",
+        widget=forms.EmailInput(attrs={
+            "class": "form-control",
+            "placeholder": "Correo asociado a su cuenta"
+        })
+    )
 
+#-------------------------------------------------------------------------------------------------------------------------------
+# Formulario para definir nueva contraseña
+class PasswordResetConfirmForm(forms.Form):
+    nueva_contrasena = forms.CharField(
+        label="Nueva contraseña",
+        max_length=15,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Ingrese nueva contraseña"
+        })
+    )
+    repetir_contrasena = forms.CharField(
+        label="Repetir contraseña",
+        max_length=15,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Repita la contraseña"
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        primera = cleaned_data.get("nueva_contrasena")
+        segunda = cleaned_data.get("repetir_contrasena")
+        if primera and segunda and primera != segunda:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+        return cleaned_data
+#-------------------------------------------------------------------------------------------------------------------------------
 class ChoferForm(forms.ModelForm):
     class Meta:
         model = Conductores
@@ -158,7 +201,7 @@ class ChoferForm(forms.ModelForm):
             ),
             'Telefono': forms.TextInput(
                 attrs={
-                    'placeholder': 'Debe ingresar teléfono',
+                    'placeholder': 'Debe ingresar telÃ©fono',
                     'class': 'form-control',
                     'type': 'tel'
                 }
@@ -193,7 +236,7 @@ class ChoferForm(forms.ModelForm):
             'Direccion': forms.TextInput(
                 attrs={
                     'class': 'form-control',
-                    'placeholder': 'Debe ingresar dirección',
+                    'placeholder': 'Debe ingresar direcciÃ³n',
                 }
             ),
             'Nacionalidad': forms.TextInput(
@@ -239,7 +282,7 @@ class VehiculosForm(forms.ModelForm):
                     'placeholder': 'Ej. X-Trail'
                 }
             ),
-            'año_modelo': forms.NumberInput(
+            'aÃ±o_modelo': forms.NumberInput(
                 attrs={
                     'class': 'form-control',
                     'placeholder': 'Ej. 2023'
@@ -315,7 +358,7 @@ class TrasporteForm(forms.ModelForm):
                     'placeholder': 'Ej. X-Trail'
                 }
             ),
-            'año_modelo': forms.NumberInput(
+            'aÃ±o_modelo': forms.NumberInput(
                 attrs={
                     'class': 'form-control',
                     'placeholder': 'Ej. 2023'
@@ -416,8 +459,8 @@ class ReservasForm(forms.ModelForm):
             'Fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
 
-            # Para campos numéricos, TextInput o NumberInput. 
-            # El validador del modelo se encargará de limitar el rango.
+            # Para campos numÃ©ricos, TextInput o NumberInput. 
+            # El validador del modelo se encargarÃ¡ de limitar el rango.
             'Monto_tarifa': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 9999999}),
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
@@ -465,11 +508,11 @@ class ReservasWebForm(forms.ModelForm):
             'nro_vuelo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu numero de vuelo (Ej: AB1234)'}),
             'Origen': forms.Select(attrs={'class': 'form-select'}),
             'Destino': forms.Select(attrs={'class': 'form-select'}),
-            'Dirrecion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección completa'}),
+            'Dirrecion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'DirecciÃ³n completa'}),
             'Fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
-            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehículo'}),
+            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehÃ­culo'}),
             'Comentario': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Comentario opcional'}),
         }
