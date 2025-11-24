@@ -13,8 +13,24 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+# Cargar variables desde .env sin dependencias extras
+def _load_env_file(env_path: Path):
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Intenta cargar variables desde .env en la raíz del proyecto
+_load_env_file(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -163,16 +179,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Configuración de email
-# Usa SMTP si se definen variables de entorno, de lo contrario cae a consola.
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
-    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-    EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@tol.local")
+# Configuración de email (Brevo por defecto si hay credenciales en el entorno)
+BREVO_SMTP_HOST = os.getenv("BREVO_SMTP_HOST", "smtp-relay.brevo.com")
+BREVO_SMTP_PORT = int(os.getenv("BREVO_SMTP_PORT", "587"))
+BREVO_SMTP_USER = os.getenv("BREVO_SMTP_USER")
+BREVO_SMTP_PASS = os.getenv("BREVO_SMTP_PASS")
+BREVO_DEFAULT_FROM = os.getenv("BREVO_DEFAULT_FROM")
+
+if BREVO_SMTP_USER and BREVO_SMTP_PASS:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = BREVO_SMTP_HOST
+    EMAIL_PORT = BREVO_SMTP_PORT
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = BREVO_SMTP_USER
+    EMAIL_HOST_PASSWORD = BREVO_SMTP_PASS
+    DEFAULT_FROM_EMAIL = BREVO_DEFAULT_FROM or BREVO_SMTP_USER
 else:
+    # Sin credenciales definidas, no intentamos enviar y caemos a consola.
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
     DEFAULT_FROM_EMAIL = "no-reply@tol.local"
