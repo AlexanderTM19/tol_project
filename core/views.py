@@ -139,9 +139,21 @@ def password_reset_request(request):
         reset_link = request.build_absolute_uri(reverse('password_reset_confirm', args=[registro.token]))
 
         try:
+            nombre_completo = f"{getattr(usuario, 'Nombres', '').strip()} {getattr(usuario, 'Apellidos', '').strip()}".strip()
+            saludo = f"Hola, {nombre_completo}" if nombre_completo else "Hola"
+            mensaje = (
+                f"{saludo},\n\n"
+                "Recibimos una solicitud para restablecer la contraseña de tu cuenta. "
+                "Si fuiste tú, abre el siguiente enlace seguro y define una nueva contraseña:\n\n"
+                f"{reset_link}\n\n"
+                "Este enlace es personal y tiene un tiempo limitado de vigencia. "
+                "Si no solicitaste el cambio, puedes ignorar este correo y tu contraseña seguirá siendo la misma.\n\n"
+                "Gracias por utilizar nuestros servicios.\n"
+                "Equipo de soporte"
+            )
             send_mail(
-                subject='Recuperacion de contrasena',
-                message=f'Usa este enlace para definir una nueva contrasena: {reset_link}',
+                subject='Restablecimiento de contraseña',
+                message=mensaje,
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@tol.local'),
                 recipient_list=[usuario.Correo],
                 fail_silently=True,
