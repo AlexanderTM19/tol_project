@@ -169,7 +169,9 @@ class Reservas(models.Model):
     ]
     estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
     Chofer_asignado = models.ForeignKey(Conductores, on_delete=models.SET_NULL, null=True, blank=True)
-
+    Transferencia_realizada = models.BooleanField(default=False) 
+    # 
+    
     def __str__(self):
         return self.Id_reserva
 
