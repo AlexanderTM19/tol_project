@@ -933,6 +933,8 @@ def _construir_eventos_reservas():
                 'chofer': chofer_asignado or 'Sin asignar',
                 'monto': reserva.Monto_tarifa or 0 ,
                 'estado': reserva.estado or 'PENDIENTE',
+                'mediopago': reserva.mediopago or '',
+                'Comentario': reserva.Comentario or '',
             },
             'classNames': [clase_estado] if clase_estado else [],
         })
@@ -956,7 +958,8 @@ def _enviar_correo_confirmacion_reserva(reserva):
         direccion = reserva.Dirrecion or 'Por confirmar'
         nro_vuelo = reserva.nro_vuelo or 'No informado'
         tarifa = reserva.Monto_tarifa if reserva.Monto_tarifa not in (None, '') else 'Por confirmar'
-
+        mediopago = reserva.mediopago or 'Por confirmar'
+        comentarios = reserva.Comentario or 'Ninguno'
         asunto = "Hemos recibido su solicitud de reserva"
         mensaje = (
             f"Estimado/a {nombre},\n\n"
@@ -967,7 +970,9 @@ def _enviar_correo_confirmacion_reserva(reserva):
             f"- Destino: {destino}\n"
             f"- Direccion: {direccion}\n"
             f"- Numero de vuelo: {nro_vuelo}\n"
-            f"- Tarifa: {tarifa}\n\n"
+            f"- Tarifa: {tarifa}\n"
+            f"- Medio de pago: {comentarios}\n"
+            f"- Comentarios de la reserva: {mediopago}\n\n"
             "Este correo es solo de recepcion. Nos contactaremos pronto para confirmar o ajustar cualquier detalle.\n\n"
             "Gracias por preferirnos.\n"
         )
@@ -996,7 +1001,7 @@ def exportar_reserva_excel(request, reserva_id):
     ws = wb.active
     ws.title = "Reserva"
 
-    ws.append(["Nombre y apellido", "Fecha y hora", "Dirección exacta y comuna", "Número de vuelo", "Tarifa"])
+    ws.append(["Nombre y apellido", "Fecha y hora", "Dirección exacta y comuna", "Número de vuelo","Medio de pago", "Tarifa", "Comentarios"])
 
     fecha_hora = datetime.combine(reserva.Fecha, reserva.Hora)
     comuna = ''
@@ -1006,14 +1011,18 @@ def exportar_reserva_excel(request, reserva_id):
         comuna = reserva.Destino.Nombre_Comuna
     direccion = reserva.Dirrecion or ''
     direccion_completa = f"{direccion} - {comuna}" if comuna else direccion
+    Medio_pago = reserva.mediopago or ''
     tarifa = reserva.Monto_tarifa if reserva.Monto_tarifa is not None else ''
+    comentario = reserva.Comentario or ''
 
     ws.append([
         f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
         fecha_hora.strftime('%d-%m-%Y %H:%M'),
         direccion_completa,
         reserva.nro_vuelo or '',
+        Medio_pago,
         tarifa,
+        comentario,
     ])
 
     for col in ws.columns:
@@ -1029,6 +1038,36 @@ def exportar_reserva_excel(request, reserva_id):
     wb.save(response)
     return response
 
+@login_required
+@require_POST
+def confirmar_pago_conductor(request):
+    try:
+        # Decodifica el cuerpo JSON de la solicitud
+        data = json.loads(request.body)
+        reserva_id = data.get('reserva_id')
+
+        if not reserva_id:
+            return JsonResponse({'exito': False, 'mensaje': 'ID de reserva no proporcionado.'}, status=400)
+
+        # 1. Busca la reserva
+        try:
+            # Asumiendo que el ID de la reserva es el campo primary key (pk)
+            reserva = Reservas.objects.get(pk=reserva_id)
+        except reserva.DoesNotExist:
+            return JsonResponse({'exito': False, 'mensaje': f'Reserva #{reserva_id} no encontrada.'}, status=404)
+
+        # 2. Realiza el cambio de estado (de False a True)
+        reserva.Confirmacion_pagoConductor = True
+        
+        # 3. Guarda el cambio en la base de datos
+        reserva.save()
+
+        # 4. Devuelve una respuesta JSON de éxito
+        return JsonResponse({'exito': True, 'mensaje': 'Pago de conductor confirmado con éxito.'})
+
+    except Exception as e:
+        return JsonResponse({'exito': False, 'mensaje': f'Error interno: {str(e)}'}, status=500)
+    
 
 @login_required
 @user_passes_test(es_admin)
