@@ -46,7 +46,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('password/recuperar', views.password_reset_request, name='password_reset_request'),
     path('password/reset/<str:token>/', views.password_reset_confirm, name='password_reset_confirm'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='inicio'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     # Ficha conductor y perfil conductor
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
