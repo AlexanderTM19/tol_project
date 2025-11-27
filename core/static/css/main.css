@@ -163,12 +163,12 @@ h6 {
 }
 
 .header .top-row .logo img {
-  max-height: 40px;
-  margin-right: 10px;
+  max-height: 60px;
+  margin-right: 20px;
 }
 
 .header .top-row .logo .sitename {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 400;
   color: var(--heading-color);
   font-family: var(--heading-font);
@@ -1301,6 +1301,25 @@ section,
     transform: translateY(-8px);
   }
 }
+
+/*--------------------------------------------------------------
+# Card Section
+--------------------------------------------------------------*/
+
+.card-img-top {
+  width: 235px;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+}
+.card-body{
+  font-family: var(--heading-font);
+  text-align: center;
+}
+
+.card-title{
+  font-weight: bold;
+}
+
 
 /*--------------------------------------------------------------
 # Pricing Section
