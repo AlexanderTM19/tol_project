@@ -1120,6 +1120,10 @@ def crear_reserva_admin(request):
                 'chofer': chofer_nombre,
                 'monto': reserva.Monto_tarifa,
                 'estado': reserva.estado or 'PENDIENTE',
+                'Confirmacion_pagoConductor': True,
+                'mediopago': reserva.mediopago,
+                'comentario': reserva.Comentario,
+                
             },
             'classNames': [f"evt-{(reserva.estado or '').lower()}"] if reserva.estado else [],
         }
@@ -1163,7 +1167,10 @@ def reservas_web_pendientes(request):
             'hora': reserva.Hora.strftime('%H:%M'),
             'personas': reserva.Cantidad_pasajeros,
             'maletas': reserva.Cantidad_maletas,
-            'comentario': reserva.Comentario,
+            'mediopago': reserva.mediopago,
+            'comentario': reserva.Comentario, 
+            
+             
         })
 
     return JsonResponse({'reservas': datos})
@@ -1218,7 +1225,9 @@ def aceptar_reserva_web(request):
         Cantidad_maletas=reserva_web.Cantidad_maletas,
         Confirmacion=True,
         Chofer_asignado=chofer,
-        # Nota: El estado por defecto ('PENDIENTE') se mantiene a menos que lo especifiques aquÃ­.
+        mediopago=reserva_web.mediopago,
+        Confirmacion_pagoConductor=False,
+        Comentario=reserva_web.Comentario 
     )
 
     _enviar_correo_confirmacion_reserva(reserva_confirmada)
@@ -1238,6 +1247,9 @@ def aceptar_reserva_web(request):
             'monto': str(reserva_confirmada.Monto_tarifa), # Opcional: incluir el monto en el evento
             'chofer': f"{chofer.usuario.Nombres} {chofer.usuario.Apellidos}".strip(),
             'estado': reserva_confirmada.estado or 'PENDIENTE',
+            'Confirmacion_pagoConductor': reserva_confirmada.Confirmacion_pagoConductor or '',
+            'mediopago': reserva_confirmada.mediopago or '',
+            'Comentario': reserva_confirmada.Comentario or 'Sin comentario',
         },
         'classNames': [f"evt-{(reserva_confirmada.estado or '').lower()}"] if reserva_confirmada.estado else [],
     }

@@ -516,7 +516,7 @@ class ReservasWebForm(forms.ModelForm):
             'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
-            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehÃ­culo'}),
+            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehi­culo'}),
             'Comentario': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'En este campo especifica la cantidad de adultos y niños que viajaran en el vehiculo, ademas tambien agrega algun dellate que consideres relevante sobre el servicio.'}),
             'mediopago': forms.Select(attrs={'class': 'form-select'}),
         }
