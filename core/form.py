@@ -440,7 +440,7 @@ class ReservasForm(forms.ModelForm):
             'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo','nro_vuelo',
             'Origen', 'Destino','Monto_tarifa', 'Dirrecion', 'Fecha', 'Hora',
             'Cantidad_pasajeros', 'Cantidad_maletas', 'Confirmacion',
-            'Chofer_asignado'
+            'Chofer_asignado','mediopago','Comentario'
         ]
         widgets = {
             'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'}),
@@ -466,6 +466,8 @@ class ReservasForm(forms.ModelForm):
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
             'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),
             'Confirmacion': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'mediopago': forms.Select(attrs={'class': 'form-select'}),
+            'Comentario': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'En este campo especifica la cantidad de adultos y niños que viajaran en el vehiculo, ademas tambien agrega algun dellate que consideres relevante sobre el servicio.'}),
         }
     
     # Si quisieras asegurarte de que la Comuna de Origen NO sea igual a la Comuna de Destino
@@ -499,6 +501,7 @@ class ReservasWebForm(forms.ModelForm):
             'Cantidad_maletas',
             'Vehiculo_solicitado',
             'Comentario',
+            'mediopago',
         ]
         widgets = {
             'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
@@ -513,6 +516,7 @@ class ReservasWebForm(forms.ModelForm):
             'Hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'Cantidad_pasajeros': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}),
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
-            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehÃ­culo'}),
-            'Comentario': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Comentario opcional'}),
+            'Vehiculo_solicitado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de vehi­culo'}),
+            'Comentario': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'En este campo especifica la cantidad de adultos y niños que viajaran en el vehiculo, ademas tambien agrega algun dellate que consideres relevante sobre el servicio.'}),
+            'mediopago': forms.Select(attrs={'class': 'form-select'}),
         }

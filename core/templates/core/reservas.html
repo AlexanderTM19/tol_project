@@ -144,8 +144,8 @@
                             <div class="row vehicle-options">
                                 <div class="col-md-6 mb-3" id="taxi-4-option">
                                     <div class="vehicle-card p-3 border rounded">
-                                        <h4 class="card-title">Taxi (hasta 4 personas)</h4>
-                                        <p class="card-text">Ideal para grupos pequeños. Confort y seguridad.</p>
+                                        <h4 class="card-title">Taxi </h4>
+                                        <p class="card-text">Confort y seguridad.</p>
                                         <input type="radio" name="Vehiculo_solicitado" value="Taxi" id="taxi-4"
                                             class="form-check-input" required>
                                         <label class="form-check-label" for="taxi-4">
@@ -154,7 +154,35 @@
                                     </div>
                                 </div>
                             </div>
-
+                            <div class="row"> 
+                                <div class="col-md-12 col-lg-12">
+                                    <div class="form-field">
+                                        <label for="id_mediopago" class="field-label">Medio de Pago:</label>
+                                        
+                                        {% if form.mediopago %}
+                                            {{ form.mediopago }}
+                                            {# Opcional: Manejo de errores #}
+                                            {% if form.mediopago.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.mediopago.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <select name="mediopago" class="form-select" id="id_mediopago" name='id_mediopago' required>
+                                                <option value="">Seleccione el medio de pago...</option>
+                                                {# {% for value, label in medios_pago_choices %} #}
+                                                {#    <option value="{{ value }}">{{ label }}</option> #}
+                                                {# {% endfor %} #}
+                                                <option value="TARJETA">Tarjeta</option>
+                                                <option value="EFECTIVO">Efectivo</option>
+                                                <option value="TRANSFERENCIA">Transferencia</option>
+                                            </select>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-field mb-4">
                                 <label for="comentario-reserva" class="field-label">Comentario (opcional):</label>
                                 <textarea name="Comentario" id="comentario-reserva" class="form-input" rows="3"
@@ -278,6 +306,7 @@
                 Cantidad_pasajeros: document.getElementById('personas-select').value,
                 Cantidad_maletas: document.getElementById('maletas-select').value,
                 Vehiculo_solicitado: document.querySelector('input[name="Vehiculo_solicitado"]:checked') ? document.querySelector('input[name="Vehiculo_solicitado"]:checked').value : '',
+                mediopago: document.querySelector('select[name="mediopago"]').value,
                 Comentario: document.getElementById('comentario-reserva').value.trim(),
             };
 

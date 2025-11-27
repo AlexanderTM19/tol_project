@@ -48,42 +48,7 @@
                                 class="whatsapp">
                                 <i class="bi bi-whatsapp"></i>
                             </a>
-                            <li class="nav-item">
-                                {% if user.is_authenticated %}
-                                <p>Hola, <strong>{{ user.username }}</strong></p>
-                                <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-light btn-sm">
-                                        <i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar sesión
-                                    </button>
-                                </form>
-
-                                {% else %}
-                                <a href="{% url 'login' %}" class="fa-solid fa-left-from-bracket me-2">
-                                    <i class="bi bi-box-arrow-right"></i> Iniciar sesión
-                                </a>
-                                {% endif %}
-                            </li>
-                            <li class="nav-item">
-                                {% if user.is_authenticated and user.is_superuser %}
-                                <a class="btn" href="{% url 'admin_config' %}">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                </a>
-                                {% endif %}
-                            </li>
-
                         </ul>
-
-
-
-
-
-
-
-
-
-
-
                     </div>
                 </div>
             </div>

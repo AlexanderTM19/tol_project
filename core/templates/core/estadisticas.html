@@ -14,6 +14,21 @@
     color: #0f172a; /* slate-900 for better contrast on pastel */
   }
   .wallet-card.light .subtext { color: #334155; }
+  .wallet-card.real {
+    background: linear-gradient(135deg, #0f172a 0%, #0ea5e9 45%, #10b981 100%);
+    color: #f8fafc;
+    position: relative;
+    overflow: hidden;
+  }
+  .wallet-card.real::after {
+    content: '';
+    position: absolute;
+    right: -30px; top: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
+    transform: rotate(20deg);
+  }
+  .wallet-card.real .subtext { color: #e0f2fe; }
   .filter-select { max-width: 220px; }
   .stats-controls { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
   .stats-controls .form-select-sm,
@@ -33,7 +48,8 @@
   .section-divider { border: 0; height: 6px; border-radius: 999px; background: linear-gradient(90deg,#0ea5e9,#6366f1,#22c55e); opacity: 1; }
   /* Ajuste visual: elevar el card del donut para ocupar el espacio superior en pantallas grandes */
   @media (min-width: 1200px) {
-    .donut-align-top { margin-top: -96px; }
+    /* Alinea el card del donut con el inicio del historial de ingresos */
+    .donut-align-top { margin-top: 24px; }
   }
   /* Distribución visual del card de donut */
   .donut-card { display: flex; flex-direction: column; height: 100%; }
@@ -123,7 +139,7 @@
         <div class="d-flex align-items-center justify-content-between">
           <div>
             <div class="subtext">Total generado por la empresa</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ total_empresa }}"></span></div>
+            <div class="value-big"><span class="js-clp js-total-empresa" data-amount="{{ total_empresa }}"></span></div>
           </div>
           <div><i class="fa-solid fa-wallet fa-2x"></i></div>
         </div>
@@ -133,10 +149,21 @@
       <div class="wallet-card light p-4 h-100">
         <div class="d-flex align-items-center justify-content-between">
           <div>
-            <div class="subtext">Ingreso personal</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ ingreso_personal }}"></span></div>
+            <div class="subtext">Ingreso estimado</div>
+            <div class="value-big"><span class="js-clp js-ingreso-personal" data-amount="{{ ingreso_personal }}"></span></div>
           </div>
           <div><i class="fa-solid fa-wallet fa-2x"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4">
+      <div class="wallet-card real p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="subtext">Ingreso real</div>
+            <div class="value-big"><span class="js-clp js-ingreso-real" data-amount="{{ ingreso_real }}"></span></div>
+          </div>
+          <div><i class="fa-solid fa-sack-dollar fa-2x"></i></div>
         </div>
       </div>
     </div>
@@ -210,7 +237,25 @@
     const primary = '#0ea5e9', secondary = '#6366f1';
 
     // Formateador CLP
-    const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+  const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+  const totalEmpresaEl = document.querySelector('.js-total-empresa');
+  const ingresoPersonalEl = document.querySelector('.js-ingreso-personal');
+  const ingresoRealEl = document.querySelector('.js-ingreso-real');
+
+  function setCardAmounts(totalEmpresa, ingresoPersonal, ingresoReal){
+    if (typeof totalEmpresa === 'number' && totalEmpresaEl){
+      totalEmpresaEl.dataset.amount = totalEmpresa;
+      totalEmpresaEl.textContent = fmtCLP(totalEmpresa);
+    }
+    if (typeof ingresoPersonal === 'number' && ingresoPersonalEl){
+      ingresoPersonalEl.dataset.amount = ingresoPersonal;
+      ingresoPersonalEl.textContent = fmtCLP(ingresoPersonal);
+    }
+    if (typeof ingresoReal === 'number' && ingresoRealEl){
+      ingresoRealEl.dataset.amount = ingresoReal;
+      ingresoRealEl.textContent = fmtCLP(ingresoReal);
+    }
+  }
 
     // -------------------------------------------------------------------------
     // 2. GRÁFICO DE INGRESOS (INCOME CHART)
@@ -293,6 +338,9 @@
 
         const labels = payload.labels || [];
         const datasets = payload.datasets || [];
+        const totalEmpresa = typeof payload.total_empresa === 'number' ? payload.total_empresa : null;
+        const ingresoPersonal = typeof payload.ingreso_personal === 'number' ? payload.ingreso_personal : null;
+        const ingresoReal = typeof payload.ingreso_real === 'number' ? payload.ingreso_real : null;
 
         const hasData = datasets.length > 0 && datasets.some(ds => Array.isArray(ds.data) && ds.data.some(v => v !== null && v !== 0));
         incomeNoDataEl.style.display = hasData ? 'none' : 'block';
@@ -312,6 +360,14 @@
         }
         incomeChart.options.plugins.legend.display = incomeChart.data.datasets.length > 1;
         incomeChart.update();
+
+        if (totalEmpresa !== null || ingresoPersonal !== null || ingresoReal !== null){
+          setCardAmounts(
+            totalEmpresa ?? parseFloat(totalEmpresaEl?.dataset.amount || 0),
+            ingresoPersonal ?? parseFloat(ingresoPersonalEl?.dataset.amount || 0),
+            ingresoReal ?? parseFloat(ingresoRealEl?.dataset.amount || 0)
+          );
+        }
       }catch(err){
         console.error('Error fetching estadisticas data', err);
         incomeNoDataEl.style.display = 'block';

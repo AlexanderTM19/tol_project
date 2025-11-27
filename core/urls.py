@@ -39,13 +39,15 @@ urlpatterns = [
     path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
     path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),
     path('administrador/reservas/crear', views.crear_reserva_admin, name='crear_reserva_admin'),
+    path('administrador/reservas/<int:reserva_id>/excel', views.exportar_reserva_excel, name='exportar_reserva_excel'),
+    path('reservas/confirmar-pago-conductor/', views.confirmar_pago_conductor, name='confirmar_pago_conductor'),
     path('delete_Tarifa/<id>',views.delete_Tarifa,name='delete_Tarifa'),
 
     # Login y Logout
     path('login/', views.login_view, name='login'),
     path('password/recuperar', views.password_reset_request, name='password_reset_request'),
     path('password/reset/<str:token>/', views.password_reset_confirm, name='password_reset_confirm'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='inicio'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     # Ficha conductor y perfil conductor
     path('ficha-conductor/', views.ficha_conductor, name='ficha_conductor'),
