@@ -394,7 +394,13 @@ def estadisticas_data(request):
                 values[m] = round((monto / 1000), 2)
             datasets = [{ 'label': f'Ingresos {year}', 'data': values }]
             ingreso_personal = int(total_empresa * 0.20)
-            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
+            total_real = Reservas.objects.filter(
+                estado='REALIZADO',
+                Confirmacion_pagoConductor=True,
+                Fecha__year=year
+            ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+            ingreso_real = int(total_real * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal, 'ingreso_real': ingreso_real })
 
         if period == 'mes':
             year = int(request.GET.get('year', now.year))
@@ -413,7 +419,14 @@ def estadisticas_data(request):
                     values[d] = round((monto / 1000), 2)
             datasets = [{ 'label': f'Ingresos {month}/{year}', 'data': values }]
             ingreso_personal = int(total_empresa * 0.20)
-            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
+            total_real = Reservas.objects.filter(
+                estado='REALIZADO',
+                Confirmacion_pagoConductor=True,
+                Fecha__year=year,
+                Fecha__month=month
+            ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+            ingreso_real = int(total_real * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal, 'ingreso_real': ingreso_real })
 
         if period == 'semana':
             year = int(request.GET.get('year', now.year))
@@ -430,7 +443,13 @@ def estadisticas_data(request):
                 values.append(round((total / 1000), 2))
             datasets = [{ 'label': f'Ingresos semana {week}/{year}', 'data': values }]
             ingreso_personal = int(total_empresa * 0.20)
-            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
+            total_real = Reservas.objects.filter(
+                estado='REALIZADO',
+                Confirmacion_pagoConductor=True,
+                Fecha__range=(monday, monday + _dt.timedelta(days=6))
+            ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+            ingreso_real = int(total_real * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal, 'ingreso_real': ingreso_real })
 
         if period == 'dia':
             date_str = request.GET.get('date', now.isoformat())
@@ -454,7 +473,13 @@ def estadisticas_data(request):
             values = [ round((v / 1000), 2) for v in values ]
             datasets = [{ 'label': f'Ingresos {d.isoformat()}', 'data': values }]
             ingreso_personal = int(total_empresa * 0.20)
-            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
+            total_real = Reservas.objects.filter(
+                estado='REALIZADO',
+                Confirmacion_pagoConductor=True,
+                Fecha=d
+            ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+            ingreso_real = int(total_real * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal, 'ingreso_real': ingreso_real })
 
         if period == 'rango':
             def parse_date(s):
@@ -483,6 +508,14 @@ def estadisticas_data(request):
                     total_empresa += total
                     vals.append(round((total / 1000), 2))
                 datasets.append({ 'label': f'Rango 1 ({d1} a {d2})', 'data': vals })
+                total_real = Reservas.objects.filter(
+                    estado='REALIZADO',
+                    Confirmacion_pagoConductor=True,
+                    Fecha__range=(d1, d2)
+                ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                ingreso_real = int(total_real * 0.20)
+            else:
+                ingreso_real = 0
 
             if from2 and to2:
                 d3 = parse_date(from2)
@@ -502,9 +535,9 @@ def estadisticas_data(request):
                     datasets.append({ 'label': f'Rango 2 ({d3} a {d4})', 'data': vals2 })
 
             ingreso_personal = int(total_empresa * 0.20)
-            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal, 'ingreso_real': ingreso_real })
 
-        return JsonResponse({ 'labels': [], 'datasets': [], 'total_empresa': 0, 'ingreso_personal': 0 })
+        return JsonResponse({ 'labels': [], 'datasets': [], 'total_empresa': 0, 'ingreso_personal': 0, 'ingreso_real': 0 })
 
     except Exception as e:
         return JsonResponse({ 'error': str(e) }, status=500)
@@ -529,6 +562,11 @@ def estadisticas(request):
 
     # Ingreso personal: estimaciÃ³n (esta suposiciÃ³n se mantiene por ahora).
     ingreso_personal = int(total_empresa * 0.20)
+    total_real = Reservas.objects.filter(
+        estado='REALIZADO',
+        Confirmacion_pagoConductor=True
+    ).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+    ingreso_real = int(total_real * 0.20)
 
     # ----------------------------------------------------------------------
     # â­ MODIFICACIONES PARA EL GRÃFICO DE INGRESOS MENSUALES
@@ -565,6 +603,7 @@ def estadisticas(request):
         'clientes_frecuentes': clientes_frecuentes,
         'total_empresa': total_empresa,
         'ingreso_personal': ingreso_personal,
+        'ingreso_real': ingreso_real,
         
         # â­ AÃ±adir los datos del grÃ¡fico al contexto
         'ingresos_mensuales_json': ingresos_mensuales_json,
@@ -935,6 +974,7 @@ def _construir_eventos_reservas():
                 'estado': reserva.estado or 'PENDIENTE',
                 'mediopago': reserva.mediopago or '',
                 'Comentario': reserva.Comentario or '',
+                'Confirmacion_pagoConductor': bool(reserva.Confirmacion_pagoConductor),
             },
             'classNames': [clase_estado] if clase_estado else [],
         })
@@ -971,8 +1011,8 @@ def _enviar_correo_confirmacion_reserva(reserva):
             f"- Direccion: {direccion}\n"
             f"- Numero de vuelo: {nro_vuelo}\n"
             f"- Tarifa: {tarifa}\n"
-            f"- Medio de pago: {comentarios}\n"
-            f"- Comentarios de la reserva: {mediopago}\n\n"
+            f"- Medio de pago: {mediopago}\n"
+            f"- Comentarios de la reserva: {comentarios}\n\n"
             "Este correo es solo de recepcion. Nos contactaremos pronto para confirmar o ajustar cualquier detalle.\n\n"
             "Gracias por preferirnos.\n"
         )
@@ -1053,7 +1093,7 @@ def confirmar_pago_conductor(request):
         try:
             # Asumiendo que el ID de la reserva es el campo primary key (pk)
             reserva = Reservas.objects.get(pk=reserva_id)
-        except reserva.DoesNotExist:
+        except Reservas.DoesNotExist:
             return JsonResponse({'exito': False, 'mensaje': f'Reserva #{reserva_id} no encontrada.'}, status=404)
 
         # 2. Realiza el cambio de estado (de False a True)
@@ -1159,9 +1199,9 @@ def crear_reserva_admin(request):
                 'chofer': chofer_nombre,
                 'monto': reserva.Monto_tarifa,
                 'estado': reserva.estado or 'PENDIENTE',
-                'Confirmacion_pagoConductor': True,
+                'Confirmacion_pagoConductor': bool(reserva.Confirmacion_pagoConductor),
                 'mediopago': reserva.mediopago,
-                'comentario': reserva.Comentario,
+                'Comentario': reserva.Comentario,
                 
             },
             'classNames': [f"evt-{(reserva.estado or '').lower()}"] if reserva.estado else [],

@@ -57,7 +57,6 @@
                                 <th>Medio de pago</th>
                                 <th>Monto</th>
                                 <th>Estado</th>
-                                <th>Comentarios</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -558,6 +557,40 @@
     /* Toggle helpers to avoid display:none on calendar wrapper */
     .view-hidden { position: absolute; left: -99999px; top: -99999px; opacity: 0; pointer-events: none; height: 0; overflow: hidden; width: 100%; }
     .view-visible { position: relative; opacity: 1; height: auto; }
+
+    /* Modal de confirmación custom */
+    .confirm-modal .modal-content {
+        border: 0;
+        border-radius: 16px;
+        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), rgba(0,0,0,0.65)), linear-gradient(135deg, #0f172a 0%, #0b3a6a 50%, #0ea5e9 100%);
+        color: #e2e8f0;
+        box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+    }
+    .confirm-modal .modal-header {
+        border: 0;
+        padding-bottom: 0.5rem;
+    }
+    .confirm-modal .modal-title {
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+    .confirm-modal .modal-body { padding-top: 0.25rem; }
+    .confirm-modal .modal-footer {
+        border: 0;
+        padding-top: 0;
+    }
+    .confirm-modal .btn-confirm {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border: 0;
+        color: #f8fafc;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(34, 197, 94, 0.35);
+    }
+    .confirm-modal .btn-cancel {
+        background: rgba(255,255,255,0.08);
+        color: #e2e8f0;
+        border: 1px solid rgba(255,255,255,0.15);
+    }
 </style>
 {% endblock %}
 
@@ -567,6 +600,60 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Contenedor de toasts
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '2000';
+        document.body.appendChild(toastContainer);
+
+        function showToast(message, variant='success') {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+              <div class="toast align-items-center text-bg-${variant} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                  <div class="toast-body">${message}</div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+              </div>
+            `;
+            const toastEl = wrapper.firstElementChild;
+            toastContainer.appendChild(toastEl);
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toast.show();
+            toastEl.addEventListener('hidden.bs.toast', ()=> toastEl.remove());
+        }
+
+        // Modal de confirmación custom
+        const modalMarkup = `
+          <div class="modal fade confirm-modal" id="confirmPagoModal" tabindex="-1" aria-labelledby="confirmPagoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="confirmPagoLabel">Confirmar pago al conductor</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p class="mb-0" id="confirmPagoMensaje">¿Desea confirmar el pago al conductor?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-confirm" id="btnConfirmPago">Confirmar</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalMarkup);
+        const confirmModalEl = document.getElementById('confirmPagoModal');
+        const confirmModal = new bootstrap.Modal(confirmModalEl);
+        const confirmBtn = document.getElementById('btnConfirmPago');
+        const confirmMsg = document.getElementById('confirmPagoMensaje');
+        let pendingReservaId = null;
+
+        confirmBtn.addEventListener('click', () => {
+            if (!pendingReservaId) return;
+            confirmarPagoConductor(pendingReservaId);
+            confirmModal.hide();
+        });
 
         // admin_reserva_crear.txt (Insertar aquí, después de la línea 396)
 
@@ -588,18 +675,27 @@ async function confirmarPagoConductor(reservaId) {
         });
         const datos = await respuesta.json();
         if (respuesta.ok && datos.exito) {
-            alert('✅ Pago al conductor confirmado con éxito.');
+            showToast('Pago al conductor confirmado con éxito.', 'success');
+            try {
+                const ev = calendar.getEventById(reservaId);
+                if (ev) {
+                    ev.setExtendedProp('Confirmacion_pagoConductor', true);
+                    renderReservationsList();
+                }
+            } catch (e) {
+                console.warn('No se pudo refrescar la fila localmente', e);
+            }
             if (typeof llenarTablaReservasWeb === 'function') {
                  llenarTablaReservasWeb();
             } else {
                  window.location.reload(); 
             }
         } else {
-            alert(datos.mensaje || 'Error al confirmar el pago.');
+            showToast(datos.mensaje || 'Error al confirmar el pago.', 'danger');
         }
     } catch (error) {
         console.error('Error de conexión:', error);
-        alert('Ocurrió un error de conexión al confirmar el pago.');
+        showToast('Ocurrió un error de conexión al confirmar el pago.', 'danger');
     }
 }
 // -----------------------------------------------------------------------
@@ -609,25 +705,31 @@ async function confirmarPagoConductor(reservaId) {
         var botonDescargarExcel = document.getElementById('descargarExcelReserva');
         var exportUrlBase = '{% url "exportar_reserva_excel" 0 %}';
 
-        const tablaReservasBody = document.getElementById('reservasWebBody'); 
-
-        if (tablaReservasBody) {
-            tablaReservasBody.addEventListener('click', function(e) {
-                
-                // MODIFICACIÓN CLAVE: Buscar directamente la nueva clase
-                let btn = e.target.closest('.confirmar-pago-conductor'); 
-                
-                // Simplificación: Ya no es necesario buscar el ícono, solo verificar que el botón existe
-                if (btn) { 
-                    
-                    const reservaId = btn.dataset.id;
-                    
-                    if (reservaId && confirm('¿Desea confirmar el pago al conductor para la Reserva #' + reservaId + '?')) {
-                        confirmarPagoConductor(reservaId);
-                    }
-                }
+        function bindConfirmPago(container) {
+            if (!container) return;
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('.confirmar-pago-conductor');
+                if (!btn) return;
+                const reservaId = btn.dataset.id;
+                if (!reservaId) return;
+                pendingReservaId = reservaId;
+                confirmMsg.textContent = `¿Desea confirmar el pago al conductor para la Reserva #${reservaId}?`;
+                confirmModal.show();
             });
         }
+
+        bindConfirmPago(document.getElementById('reservasWebBody'));
+        bindConfirmPago(document.getElementById('reservasListTableBody'));
+        // Respaldo: delega sobre todo el documento por si se renderiza en otro contenedor
+        document.addEventListener('click', function(e){
+            const btn = e.target.closest('.confirmar-pago-conductor');
+            if (!btn || btn.closest('.toast')) return;
+            const reservaId = btn.dataset.id;
+            if (!reservaId) return;
+            pendingReservaId = reservaId;
+            confirmMsg.textContent = `¿Desea confirmar el pago al conductor para la Reserva #${reservaId}?`;
+            confirmModal.show();
+        });
 
         // Función para poblar y mostrar el modal de detalle desde un evento del calendario
         function mostrarModalEvento(event){
@@ -729,6 +831,22 @@ async function confirmarPagoConductor(reservaId) {
                 var p = ev.extendedProps || {};
                 var fecha = ev.start ? ev.start.toLocaleDateString('es-ES') : '';
                 var hora = ev.start ? ev.start.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
+                var pagoConfirmado = !!p.Confirmacion_pagoConductor;
+                var esPasada = ev.start ? (ev.start.getTime() <= Date.now()) : true;
+                var botonesAccion = `
+                    <button type="button" class="btn btn-sm btn-primary ver-detalle" data-id="${ev.id}" title="Ver detalle de la reserva">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${pagoConfirmado || !esPasada ? '' : `
+                    <button type="button" 
+                            class="btn btn-sm btn-primary confirmar-pago-conductor" 
+                            data-id="${ev.id}" 
+                            title="Confirmar Pago Conductor">
+                        <i class="bi bi-check-circle"></i>
+                    </button>`}
+                    <a class="btn btn-sm btn-success ms-1" href="${exportUrlBase.replace('/0/', '/' + ev.id + '/')}" title="Exportar reserva a Excel">
+                        <i class="bi bi-file-earmark-excel"></i>
+                    </a>`;
                 var tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${escapeHtmlList(fecha)}</td>
@@ -742,20 +860,8 @@ async function confirmarPagoConductor(reservaId) {
                     <td>${escapeHtmlList(p.mediopago || '')}</td>
                     <td>${escapeHtmlList(p.monto != null ? p.monto : '')}</td>
                     <td>${escapeHtmlList(p.estado || '')}</td>
-                    <td>${escapeHtmlList(p.Comentario || '')}</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-primary ver-detalle" data-id="${ev.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" 
-                                class="btn btn-sm btn-primary confirmar-pago-conductor" 
-                                data-id="${ev.id}" 
-                                title="Confirmar Pago Conductor">
-                            <i class="bi bi-check-circle"></i>
-                        </button>
-                        <a class="btn btn-sm btn-success ms-1" href="${exportUrlBase.replace('/0/', '/' + ev.id + '/')}">
-                            <i class="bi bi-file-earmark-excel"></i>
-                        </a>
+                        ${botonesAccion}
                     </td>`;
                 tbody.appendChild(tr);
             });
