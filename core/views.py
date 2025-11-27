@@ -6,8 +6,8 @@ from django.db.utils import IntegrityError
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum
 from faker import Faker
-from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, PasswordResetRequestForm, PasswordResetConfirmForm, ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm,TrasporteForm
-from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb,Trasporte, PasswordResetToken
+from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm,PasswordResetRequestForm, PasswordResetConfirmForm,  ChoferForm, VehiculosForm, TarifasForm, ReservasForm, ReservasWebForm,TrasporteForm
+from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, PasswordResetToken, Tarifas, Reservas, ReservasWeb,Trasporte
 import random
 import json
 from django.http import JsonResponse
@@ -24,28 +24,23 @@ from django.views.decorators.http import require_GET
 from django.utils import timezone
 from django.contrib import messages 
 
-# âŒ FUNCIÃ“N events_json ELIMINADA para revertir la funcionalidad AJAX del calendario.
-# def events_json(request):
-#     # ... cÃ³digo eliminado ...
-#     pass
 
-
-# Función de validación de RUT
+#Funcion de validacion de rut
 def validar_rut(rut):
     """
-    Valida un RUT chileno (con o sin puntos/guiÃ³n)
+    Valida un RUT chileno (con o sin puntos/guión)
     """
     
     rut = rut.upper().replace(".", "").replace("-", "")
     
-    # Valida el formato y la longitud bÃ¡sica
+    # Valida el formato y la longitud básica
     if not rut or not rut[:-1].isdigit():
         return False
     
-    # Extrae el dÃ­gito verificador
+    # Extrae el dígito verificador
     dv = rut[-1]
     
-    # Aplica el algoritmo de MÃ³dulo 11
+    # Aplica el algoritmo de Módulo 11
     factor = 2
     suma = 0
     for digito in reversed(rut[:-1]):
@@ -54,7 +49,7 @@ def validar_rut(rut):
         
     dv_calculado = 11 - (suma % 11)
     
-    # Compara el dÃ­gito verificador calculado con el original
+    # Compara el dígito verificador calculado con el original
     if dv_calculado == 11:
         dv_final = "0"
     elif dv_calculado == 10:
@@ -65,11 +60,11 @@ def validar_rut(rut):
     return dv == dv_final
 
 
-# âœ… FunciÃ³n para validar si el usuario es superusuario
+# ✅ Función para validar si el usuario es superusuario
 def es_admin(user):
     return user.is_superuser
 
-# Vistas pÃºblicas
+# Vistas públicas
 def index(request):
     return render(request, 'core/index.html')
 
@@ -89,33 +84,45 @@ def tarifas(request):
 def contacto(request):
     return render(request, 'core/contacto.html')
 
-# Vista personalizada de login con redirecciÃ³n por perfil
-# Vista personalizada de login con redireccion por perfil
+# Vista personalizada de login con redirección por perfil
 def login_view(request):
     error = None
-    if request.method == "POST":
+    # ✅ Usar el formulario personalizado para GET y POST
+    if request.method == 'POST':
         form = CustomLoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
+            
+            # Autentica al usuario usando tu backend personalizado
             user = authenticate(request, username=username, password=password)
+            
             if user is not None:
+                # Si las credenciales son válidas, loguea al usuario
                 auth_login(request, user)
+                
                 try:
+                    # ✅ Usa el objeto de usuario autenticado para obtener el Rol
+                    # El 'user' devuelto por authenticate es tu objeto Usuarios
                     if user.Rol.nombre_Rol == 'Administrador' or user.Rol.nombre_Rol == 'Secretaria':
                         return redirect('admin_config')
                     elif user.Rol.nombre_Rol == 'Chofer':
                         return redirect('ficha_conductor')
                     else:
                         return redirect('inicio')
+                        
+                        
                 except AttributeError:
+                    # En caso de que el usuario no tenga un campo 'Rol' definido
                     return redirect('inicio')
             else:
-                error = "Usuario o contrasena incorrectos"
+                error = "Usuario o contraseña incorrectos"
         else:
-            error = "Usuario o contrasena incorrectos"
+            error = "Usuario o contraseña incorrectos"
     else:
+        # ✅ Para peticiones GET, inicializa el formulario vacío
         form = CustomLoginForm()
+
     return render(request, 'core/login.html', {'form': form, 'error': error })
 
 # Flujo para recuperar contrasena sin hash
@@ -185,6 +192,7 @@ def password_reset_confirm(request, token):
 
     return render(request, 'core/password_reset_confirm.html', {'form': form, 'token_valido': True})
 
+
 # Vista para ficha del conductor
 from django.contrib.auth.decorators import login_required
 @login_required
@@ -199,8 +207,8 @@ def ficha_conductor(request):
         # 2. Ordenamos por la 'Fecha' y luego por la 'Hora' (descendente).
         # 3. Usamos .select_related('Chofer_asignado') para obtener los datos del conductor de una vez.
         
-        # El mÃ©todo .latest() funciona si el campo es DateTimeField. 
-        # Como tienes DateField y TimeField por separado, la forma mÃ¡s fiable es usar .order_by() y tomar el primero.
+        # El método .latest() funciona si el campo es DateTimeField. 
+        # Como tienes DateField y TimeField por separado, la forma más fiable es usar .order_by() y tomar el primero.
         
         ultima_reserva = Reservas.objects.filter(
             estado='REALIZADO',
@@ -221,7 +229,7 @@ def ficha_conductor(request):
         servicios_realizados=Count('reservas', filter=Q(reservas__estado='REALIZADO'))
     )
 
-    # Conductor con mÃ¡s y menos servicios realizados
+    # Conductor con más y menos servicios realizados
     conductor_mas_servicios = Listado_conductores.order_by('-servicios_realizados', 'Nro_ficha').first()
     conductor_menos_servicios = Listado_conductores.order_by('servicios_realizados', 'Nro_ficha').first()
     
@@ -298,7 +306,7 @@ def servicios_conductor(request):
     return render(request, 'core/serviciosConductor.html', contexto)
 #-------------------------------------------------------------------------------------------------------------------------------
 
-# âœ… Vistas de administrador (requieren login + superuser)
+# ✅ Vistas de administrador (requieren login + superuser)
 @login_required
 @user_passes_test(es_admin)
 def clientes(request):
@@ -308,35 +316,35 @@ def clientes(request):
 #-------------------------------------------------------------------------------------------------------------------------------
 def api_ingresos_mensual(request, year, month):
     """
-    Devuelve los ingresos (Monto_tarifa) por dÃ­a para un mes y aÃ±o especÃ­ficos,
-    para alimentar el filtro 'mes' del grÃ¡fico.
+    Devuelve los ingresos (Monto_tarifa) por día para un mes y año específicos,
+    para alimentar el filtro 'mes' del gráfico.
     """
     
     try:
-        # 1. Obtener la suma de ingresos por dÃ­a
+        # 1. Obtener la suma de ingresos por día
         ingresos_por_dia = Reservas.objects.filter(
             Fecha__year=year,
             Fecha__month=month,
             estado='REALIZADO'
         ).values('Fecha__day').annotate(total=Sum('Monto_tarifa')).order_by('Fecha__day')
         
-        # Calcular cuÃ¡ntos dÃ­as tiene ese mes (para inicializar el array)
+        # Calcular cuántos días tiene ese mes (para inicializar el array)
         if year > 0 and month >= 1 and month <= 12:
             try:
-                # Usamos el dÃ­a 1 del mes siguiente menos un dÃ­a (dÃ­a 0)
-                # para obtener el Ãºltimo dÃ­a del mes actual.
+                # Usamos el día 1 del mes siguiente menos un día (día 0)
+                # para obtener el último día del mes actual.
                 dias_en_mes = (datetime(year, month % 12 + 1, 1) - datetime(year, month, 1)).days if month < 12 else 31
             except ValueError:
-                # Si el mes es 12, calcular dÃ­as de diciembre
+                # Si el mes es 12, calcular días de diciembre
                 dias_en_mes = 31
         else:
-            return JsonResponse({'error': 'ParÃ¡metros de fecha invÃ¡lidos'}, status=400)
+            return JsonResponse({'error': 'Parámetros de fecha inválidos'}, status=400)
 
         ingresos_data = [0] * dias_en_mes
         
         # 2. Llenar el array de datos
         for item in ingresos_por_dia:
-            # Los dÃ­as en Django son 1-N. El Ã­ndice del array es 0-(N-1).
+            # Los días en Django son 1-N. El índice del array es 0-(N-1).
             monto_en_miles = (item['total'] or 0) / 1000
             ingresos_data[item['Fecha__day'] - 1] = round(monto_en_miles, 2)
             
@@ -344,13 +352,13 @@ def api_ingresos_mensual(request, year, month):
         return JsonResponse({'ingresos': ingresos_data})
         
     except Exception as e:
-        # Manejo bÃ¡sico de errores de servidor/DB
+        # Manejo básico de errores de servidor/DB
         return JsonResponse({'error': str(e)}, status=500)
 
 
 def api_ingresos_anual(request, year):
-    """Devuelve los ingresos (Monto_tarifa) por mes para un aÃ±o especÃ­fico.
-    Responde con JSON { 'labels': [...], 'ingresos': [...] } donde los ingresos estÃ¡n en 'miles' (divididos por 1000).
+    """Devuelve los ingresos (Monto_tarifa) por mes para un año específico.
+    Responde con JSON { 'labels': [...], 'ingresos': [...] } donde los ingresos están en 'miles' (divididos por 1000).
     """
     try:
         ingresos_por_mes = Reservas.objects.filter(
@@ -373,10 +381,10 @@ def api_ingresos_anual(request, year):
 @user_passes_test(es_admin)
 @require_GET
 def estadisticas_data(request):
-    """Endpoint genÃ©rico que devuelve etiquetas y datasets para el grÃ¡fico de ingresos.
-    ParÃ¡metros GET:
+    """Endpoint genérico que devuelve etiquetas y datasets para el gráfico de ingresos.
+    Parámetros GET:
       - period: 'anio'|'mes'|'semana'|'dia'|'rango' (default 'anio')
-      - year, month, week, date, from1, to1, from2, to2 segÃºn el periodo
+      - year, month, week, date, from1, to1, from2, to2 según el periodo
     Respuesta JSON: { labels: [...], datasets: [ { label, data }, ... ] }
     Los montos se devuelven en 'miles' (divididos por 1000) para coincidir con la UI.
     """
@@ -415,7 +423,7 @@ def estadisticas_data(request):
             week = int(request.GET.get('week', now.isocalendar()[1]))
             import datetime as _dt
             monday = _dt.date.fromisocalendar(year, week, 1)
-            labels = ['Lun','Mar','MiÃ©','Jue','Vie','SÃ¡b','Dom']
+            labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
             values = []
             for i in range(7):
                 day = monday + _dt.timedelta(days=i)
@@ -462,7 +470,7 @@ def estadisticas_data(request):
             datasets = []
             if d1 and d2 and d1 <= d2:
                 days = (d2 - d1).days + 1
-                labels = [f'DÃ­a {i+1}' for i in range(days)]
+                labels = [f'Día {i+1}' for i in range(days)]
                 vals = []
                 for i in range(days):
                     day = d1 + timedelta(days=i)
@@ -478,7 +486,7 @@ def estadisticas_data(request):
                     # asegurar labels lo suficientemente largos
                     maxlen = max(len(labels), days2)
                     if len(labels) < maxlen:
-                        labels = labels + [f'DÃ­a {i+1}' for i in range(len(labels), maxlen)]
+                        labels = labels + [f'Día {i+1}' for i in range(len(labels), maxlen)]
                     vals2 = []
                     for i in range(days2):
                         day = d3 + timedelta(days=i)
@@ -491,7 +499,7 @@ def estadisticas_data(request):
 
             return JsonResponse({ 'labels': labels, 'datasets': datasets })
 
-        # default: vacÃ­o
+        # default: vacío
         return JsonResponse({ 'labels': [], 'datasets': [] })
 
     except Exception as e:
@@ -506,7 +514,7 @@ def estadisticas(request):
     servicios_por_realizar = Reservas.objects.filter(estado='PENDIENTE').count()
     servicios_cancelados = Reservas.objects.filter(estado='CANCELADO').count()
 
-    # Clientes: no hay campo de fecha de creaciÃ³n, usamos Cantidad_viajes como proxy
+    # Clientes: no hay campo de fecha de creación, usamos Cantidad_viajes como proxy
     clientes_nuevos = Clientes.objects.filter(Cantidad_viajes=0).count()
     clientes_frecuentes = Clientes.objects.filter(Cantidad_viajes__gt=0).count()
 
@@ -514,17 +522,17 @@ def estadisticas(request):
     total_empresa_agg = Reservas.objects.filter(estado='REALIZADO').aggregate(total=Sum('Monto_tarifa'))
     total_empresa = total_empresa_agg.get('total') or 0
 
-    # Ingreso personal: estimaciÃ³n (esta suposiciÃ³n se mantiene por ahora).
+    # Ingreso personal: estimación (esta suposición se mantiene por ahora).
     ingreso_personal = int(total_empresa * 0.20)
 
     # ----------------------------------------------------------------------
-    # â­ MODIFICACIONES PARA EL GRÃFICO DE INGRESOS MENSUALES
+    # ⭐ MODIFICACIONES PARA EL GRÁFICO DE INGRESOS MENSUALES
     # ----------------------------------------------------------------------
     
     current_year = datetime.now().year
     
-    # 1. Obtener la suma de ingresos por mes del aÃ±o actual
-    # Usamos __year y __month para agrupar por mes y aÃ±o
+    # 1. Obtener la suma de ingresos por mes del año actual
+    # Usamos __year y __month para agrupar por mes y año
     ingresos_por_mes = Reservas.objects.filter(
         Fecha__year=current_year,
         estado='REALIZADO'
@@ -535,8 +543,8 @@ def estadisticas(request):
     ingresos_data = [0] * 12 # Inicializar 12 meses a 0
     
     for item in ingresos_por_mes:
-        # Los meses en Django son 1-12. El Ã­ndice del array es 0-11.
-        # Dividimos por 1000 para que el grÃ¡fico muestre "CLP - miles" (como lo pide tu JS)
+        # Los meses en Django son 1-12. El índice del array es 0-11.
+        # Dividimos por 1000 para que el gráfico muestre "CLP - miles" (como lo pide tu JS)
         monto_en_miles = (item['total'] or 0) / 1000
         ingresos_data[item['Fecha__month'] - 1] = round(monto_en_miles, 2)
         
@@ -553,7 +561,7 @@ def estadisticas(request):
         'total_empresa': total_empresa,
         'ingreso_personal': ingreso_personal,
         
-        # â­ AÃ±adir los datos del grÃ¡fico al contexto
+        # ⭐ Añadir los datos del gráfico al contexto
         'ingresos_mensuales_json': ingresos_mensuales_json,
         'etiquetas_meses_json': etiquetas_meses_json,
     }
@@ -563,12 +571,12 @@ def estadisticas(request):
 @login_required
 @user_passes_test(es_admin)
 def choferes(request):
-    # 1. InicializaciÃ³n del formulario para el contexto GET/Error
+    # 1. Inicialización del formulario para el contexto GET/Error
     chofer_form = ChoferForm()
     # Aseguramos que el campo 'vehiculo' sea requerido al inicializar
     chofer_form.fields['vehiculo'].required = True
     
-    # --- LÃ³gica de Manejo de Solicitud POST ---
+    # --- Lógica de Manejo de Solicitud POST ---
     if request.method == 'POST':
         # Instanciar el formulario con los datos POST
         chofer_form_to_handle = ChoferForm(request.POST, request.FILES)
@@ -579,13 +587,13 @@ def choferes(request):
                 # Guardar el objeto en la base de datos
                 chofer_form_to_handle.save()
                 
-                # APLICAR PRG (Post-Redirect-Get): RedirecciÃ³n exitosa
+                # APLICAR PRG (Post-Redirect-Get): Redirección exitosa
                 messages.success(request, "Chofer registrado correctamente.")
                 return redirect('choferes')
             
             except IntegrityError:
                 # Error de integridad (ej: DNI/RUT/Usuario ya existe)
-                messages.error(request, "No se pudo registrar el chofer. El DNI/RUT/Usuario ya estÃ¡ asignado.")
+                messages.error(request, "No se pudo registrar el chofer. El DNI/RUT/Usuario ya está asignado.")
                 # El formulario con errores se pasa al contexto
                 chofer_form = chofer_form_to_handle 
             
@@ -595,13 +603,13 @@ def choferes(request):
                 chofer_form = chofer_form_to_handle
         
         else:
-            # El formulario NO es vÃ¡lido (errores de validaciÃ³n de campos)
-            messages.error(request, "Corrige los datos marcados e intÃ©ntalo nuevamente.")
+            # El formulario NO es válido (errores de validación de campos)
+            messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
             chofer_form = chofer_form_to_handle
             
-        # Si hubo un POST con error, el flujo continÃºa a la secciÃ³n final para renderizar la pÃ¡gina con errores.
+        # Si hubo un POST con error, el flujo continúa a la sección final para renderizar la página con errores.
         
-    # --- LÃ³gica GET (se ejecuta para GET y para POST con errores) ---
+    # --- Lógica GET (se ejecuta para GET y para POST con errores) ---
     
     # Obtener lista de choferes (asumo que 'Conductores' es tu modelo)
     # select_related mejora la eficiencia al obtener datos relacionados
@@ -613,7 +621,7 @@ def choferes(request):
             .all()
         )
     except NameError:
-        # En caso de que el modelo Conductores no estÃ© definido/importado
+        # En caso de que el modelo Conductores no esté definido/importado
         lista_choferes = [] 
         
     contexto = {
@@ -626,7 +634,7 @@ def choferes(request):
 #-------------------------------------------------------------------------------------------------------------------------------
 def vehiculo(request):
     """
-    Vista para manejar el registro de nuevos vehÃ­culos.
+    Vista para manejar el registro de nuevos vehículos.
     """
     vehiculo_form = TrasporteForm()
 
@@ -636,18 +644,18 @@ def vehiculo(request):
         if form_to_handle.is_valid():
             try:
                 form_to_handle.save()
-                messages.success(request, "VehÃ­culo registrado correctamente.")
+                messages.success(request, "Vehículo registrado correctamente.")
                 return redirect('vehiculo')
             except IntegrityError as e:
-            # 'e' ahora contiene el objeto de la excepciÃ³n IntegrityError
-            # str(e) convierte ese objeto en su representaciÃ³n de cadena (el mensaje del error).
-                messages.error(request, f"No se pudo registrar el vehÃ­culo. Error tÃ©cnico: {e}")
+            # 'e' ahora contiene el objeto de la excepción IntegrityError
+            # str(e) convierte ese objeto en su representación de cadena (el mensaje del error).
+                messages.error(request, f"No se pudo registrar el vehículo. Error técnico: {e}")
                 vehiculo_form = form_to_handle # Mantiene el formulario con el error para mostrarlo
         else:
-            messages.error(request, "Corrige los datos marcados e intÃ©ntalo nuevamente.")
-            vehiculo_form = form_to_handle # Mantiene el formulario con los errores de validaciÃ³n
+            messages.error(request, "Corrige los datos marcados e inténtalo nuevamente.")
+            vehiculo_form = form_to_handle # Mantiene el formulario con los errores de validación
 
-    # LÃ³gica GET: se ejecuta para el mÃ©todo GET y para POST con errores de validaciÃ³n/IntegrityError
+    # Lógica GET: se ejecuta para el método GET y para POST con errores de validación/IntegrityError
     Lista_vehiculos = Trasporte.objects.all()
     
     contexto = {
@@ -670,7 +678,7 @@ def form_crear_conductor(request):
                 mensaje = "Datos Guardados Correctamente."
                 form = ChoferForm()
             except IntegrityError:
-                mensaje = "Error: El usuario o algÃºn dato ya estÃ¡ registrado."
+                mensaje = "Error: El usuario o algún dato ya está registrado."
     else:
         form = ChoferForm()
     
@@ -689,7 +697,7 @@ def form_crear_vehiculo(request):
                 mensaje = "Datos Guardados Correctamente."
                 form = VehiculosForm()
             except IntegrityError:
-                mensaje = "Error: Esta patente ya estÃ¡ registrada."
+                mensaje = "Error: Esta patente ya está registrada."
     else:
         form = VehiculosForm()
     
@@ -713,24 +721,24 @@ def calendario(request):
 def vista_tarifas_admin(request):
     mensaje = None
     
-    # Manejar la creaciÃ³n de una nueva tarifa (cuando se envÃ­a el formulario del modal)
+    # Manejar la creación de una nueva tarifa (cuando se envía el formulario del modal)
     if request.method == 'POST':
         form = TarifasForm(request.POST)
         if form.is_valid():
             try:
                 form.save()
                 mensaje = "Tarifa guardada correctamente."
-                # DespuÃ©s de guardar, redirigir o crear un nuevo formulario vacÃ­o
+                # Después de guardar, redirigir o crear un nuevo formulario vacío
                 form = TarifasForm() 
             except IntegrityError:
                 mensaje = "Error: La comuna ya tiene una tarifa registrada."
                 
         else:
             mensaje = "Error al validar los datos de la tarifa."
-            # Si el formulario no es vÃ¡lido, se mantiene para mostrar los errores en el modal
+            # Si el formulario no es válido, se mantiene para mostrar los errores en el modal
             
     else:
-        # Si es una peticiÃ³n GET, crea un formulario vacÃ­o
+        # Si es una petición GET, crea un formulario vacío
         form = TarifasForm()
     
     # Obtener todas las tarifas para mostrar la tabla
@@ -790,7 +798,7 @@ def form_Rol(request):
         if form.is_valid():
             nombre = form.cleaned_data.get('nombre_Rol')
             if Rol_usuario.objects.filter(nombre_Rol = nombre ).exists():
-                mensaje = "Este Rol ya estÃ¡ registrado."
+                mensaje = "Este Rol ya está registrado."
             # 3. Si todo es correcto, guarda el formulario
             else:
                 form.save()
@@ -812,13 +820,13 @@ def form_crear_usuarios(request):
         if form.is_valid():
             rut = form.cleaned_data.get('Rut')
             
-            # âœ… Paso a paso:
-            # 1. Valida el RUT usando la funciÃ³n
+            # ✅ Paso a paso:
+            # 1. Valida el RUT usando la función
             if not validar_rut(rut):
-                mensaje = "El RUT ingresado no es vÃ¡lido."
-            # 2. Si el RUT es vÃ¡lido, comprueba si ya existe
+                mensaje = "El RUT ingresado no es válido."
+            # 2. Si el RUT es válido, comprueba si ya existe
             elif Usuarios.objects.filter(Rut=rut).exists():
-                mensaje = "Este RUT ya estÃ¡ registrado."
+                mensaje = "Este RUT ya está registrado."
             # 3. Si todo es correcto, guarda el formulario
             else:
                 form.save()
@@ -852,13 +860,13 @@ def form_clientes(request):
         if form.is_valid():
             rut = form.cleaned_data.get('Rut')
             
-            # âœ… Paso a paso:
-            # 1. Valida el RUT usando la funciÃ³n
+            # ✅ Paso a paso:
+            # 1. Valida el RUT usando la función
             if not validar_rut(rut):
-                mensaje = "El RUT ingresado no es vÃ¡lido."
-            # 2. Si el RUT es vÃ¡lido, comprueba si ya existe
+                mensaje = "El RUT ingresado no es válido."
+            # 2. Si el RUT es válido, comprueba si ya existe
             elif Clientes.objects.filter(Rut=rut).exists():
-                mensaje = "Este RUT ya estÃ¡ registrado."
+                mensaje = "Este RUT ya está registrado."
             # 3. Si todo es correcto, guarda el formulario
             else:
                 form.save()
@@ -889,13 +897,13 @@ def _construir_eventos_reservas():
     ahora = timezone.localtime().replace(tzinfo=None)
     for reserva in reservas:
         inicio = datetime.combine(reserva.Fecha, reserva.Hora)
-        # Auto-marcar como REALIZADO si la fecha/hora ya pasÃ³ y no estÃ¡ cancelada
+        # Auto-marcar como REALIZADO si la fecha/hora ya pasó y no está cancelada
         if inicio < ahora and (reserva.estado or 'PENDIENTE') == 'PENDIENTE':
             reserva.estado = 'REALIZADO'
             try:
                 reserva.save(update_fields=['estado'])
             except Exception:
-                # En caso de algÃºn error de escritura, continuamos mostrando el estado derivado
+                # En caso de algún error de escritura, continuamos mostrando el estado derivado
                 pass
         nombre_cliente = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip()
         chofer_asignado = None
@@ -916,7 +924,6 @@ def _construir_eventos_reservas():
                 'clienteCorreo': reserva.Correo or '',
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
-                'nro_vuelo': reserva.nro_vuelo or '',
                 'chofer': chofer_asignado or 'Sin asignar',
                 'monto': reserva.Monto_tarifa or 0 ,
                 'estado': reserva.estado or 'PENDIENTE',
@@ -933,7 +940,7 @@ def admin_config(request):
     mensaje = None
     
     # ----------------------------------------------------------------------
-    # 1. LÃ“GICA POST (Cuando se envÃ­a el formulario del modal) - SIN AJAX
+    # 1. LÓGICA POST (Cuando se envía el formulario del modal) - SIN AJAX
     # ----------------------------------------------------------------------
     if request.method == 'POST':
         
@@ -941,29 +948,29 @@ def admin_config(request):
         form = ReservasForm(request.POST)
         
         if form.is_valid():
-            # El formulario es vÃ¡lido, guardar la reserva
+            # El formulario es válido, guardar la reserva
             reserva_nueva = form.save(commit=False)
             if not reserva_nueva.estado:
                 reserva_nueva.estado = 'PENDIENTE'
             
-            # NOTA: AquÃ­ puedes asignar campos que no estÃ¡n en el formulario (si es necesario)
+            # NOTA: Aquí puedes asignar campos que no están en el formulario (si es necesario)
             # reserva_nueva.Confirmacion = True # Ejemplo
             
             reserva_nueva.save()
             
-            # Comportamiento POST/Redirect/Get (para envÃ­os tradicionales)
+            # Comportamiento POST/Redirect/Get (para envíos tradicionales)
             return redirect('admin_config') 
 
         else:
-            # Si el formulario NO es vÃ¡lido
+            # Si el formulario NO es válido
             mensaje = "Error al guardar la reserva. Revise los campos."
             # El formulario con errores se pasa al contexto.
             
     # ----------------------------------------------------------------------
-    # 2. LÃ“GICA GET (Cuando se carga la pÃ¡gina por primera vez o despuÃ©s de un POST exitoso)
+    # 2. LÓGICA GET (Cuando se carga la página por primera vez o después de un POST exitoso)
     # ----------------------------------------------------------------------
     else:
-        # En una solicitud GET, inicializa un formulario vacÃ­o
+        # En una solicitud GET, inicializa un formulario vacío
         form = ReservasForm()
 
     eventos = _construir_eventos_reservas()
@@ -1011,10 +1018,10 @@ def crear_reserva_admin(request):
                 'clienteCorreo': reserva.Correo or '',
                 'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
                 'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
-                'nro_vuelo': reserva.nro_vuelo or '',
                 'chofer': chofer_nombre,
                 'monto': reserva.Monto_tarifa,
                 'estado': reserva.estado or 'PENDIENTE',
+                'comentario': reserva.Comentario or '',
             },
             'classNames': [f"evt-{(reserva.estado or '').lower()}"] if reserva.estado else [],
         }
@@ -1029,7 +1036,7 @@ def crear_reserva_web(request):
     try:
         datos = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
-        return JsonResponse({'exito': False, 'mensaje': 'Solicitud invÃ¡lida'}, status=400)
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
 
     formulario = ReservasWebForm(datos)
     if formulario.is_valid():
@@ -1050,7 +1057,6 @@ def reservas_web_pendientes(request):
             'nombre': f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
             'telefono': reserva.Telefono,
             'correo': reserva.Correo or '',
-            'nro_vuelo': reserva.nro_vuelo or '',
             'desde': reserva.Origen.Nombre_Comuna if reserva.Origen else '',
             'hasta': reserva.Destino.Nombre_Comuna if reserva.Destino else '',
             'direccion': reserva.Dirrecion,
@@ -1071,23 +1077,23 @@ def aceptar_reserva_web(request):
     try:
         datos = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
-        return JsonResponse({'exito': False, 'mensaje': 'Solicitud invÃ¡lida'}, status=400)
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
 
     reserva_id = datos.get('reserva_id')
     chofer_id = datos.get('chofer_id')
     
-    # â­ MODIFICACIÃ“N 1: Obtener el monto de la solicitud JSON
+    # ⭐ MODIFICACIÓN 1: Obtener el monto de la solicitud JSON
     monto_tarifa = datos.get('monto_tarifa') 
 
     if not reserva_id or not chofer_id or monto_tarifa is None:
-        # Nota: monto_tarifa se valida como 'is None' porque podrÃ­a ser 0
+        # Nota: monto_tarifa se valida como 'is None' porque podría ser 0
         return JsonResponse({'exito': False, 'mensaje': 'Datos incompletos (reserva, chofer o monto faltantes)'}, status=400)
 
     try:
         # Convertir monto a entero, asumiendo que el campo en el modelo es IntegerField
         monto_tarifa = int(monto_tarifa)
     except (ValueError, TypeError):
-        return JsonResponse({'exito': False, 'mensaje': 'Monto de tarifa invÃ¡lido'}, status=400)
+        return JsonResponse({'exito': False, 'mensaje': 'Monto de tarifa inválido'}, status=400)
 
 
     reserva_web = get_object_or_404(ReservasWeb, pk=reserva_id)
@@ -1099,11 +1105,10 @@ def aceptar_reserva_web(request):
         Apellidos_Cliente=reserva_web.Apellidos_Cliente,
         Telefono=reserva_web.Telefono,
         Correo=reserva_web.Correo,
-        nro_vuelo=reserva_web.nro_vuelo,
         Origen=reserva_web.Origen,
         Destino=reserva_web.Destino,
         
-        # â­ MODIFICACIÃ“N 2: Asignar el monto
+        # ⭐ MODIFICACIÓN 2: Asignar el monto
         Monto_tarifa=monto_tarifa, 
         
         Dirrecion=reserva_web.Dirrecion,
@@ -1113,7 +1118,8 @@ def aceptar_reserva_web(request):
         Cantidad_maletas=reserva_web.Cantidad_maletas,
         Confirmacion=True,
         Chofer_asignado=chofer,
-        # Nota: El estado por defecto ('PENDIENTE') se mantiene a menos que lo especifiques aquÃ­.
+        Comentario=reserva_web.Comentario,
+        # Nota: El estado por defecto ('PENDIENTE') se mantiene a menos que lo especifiques aquí.
     )
 
     # Preparar el objeto evento para el calendario
@@ -1127,10 +1133,11 @@ def aceptar_reserva_web(request):
             'clienteCorreo': reserva_confirmada.Correo or '',
             'desde': reserva_confirmada.Origen.Nombre_Comuna if reserva_confirmada.Origen else '',
             'hasta': reserva_confirmada.Destino.Nombre_Comuna if reserva_confirmada.Destino else '',
-            'nro_vuelo': reserva_confirmada.nro_vuelo or '',
             'monto': str(reserva_confirmada.Monto_tarifa), # Opcional: incluir el monto en el evento
             'chofer': f"{chofer.usuario.Nombres} {chofer.usuario.Apellidos}".strip(),
             'estado': reserva_confirmada.estado or 'PENDIENTE',
+            'comentario': reserva_confirmada.Comentario or 'Sin Comentarios',
+            
         },
         'classNames': [f"evt-{(reserva_confirmada.estado or '').lower()}"] if reserva_confirmada.estado else [],
     }
@@ -1147,7 +1154,7 @@ def rechazar_reserva_web(request):
     try:
         datos = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
-        return JsonResponse({'exito': False, 'mensaje': 'Solicitud invÃ¡lida'}, status=400)
+        return JsonResponse({'exito': False, 'mensaje': 'Solicitud inválida'}, status=400)
 
     reserva_id = datos.get('reserva_id')
 

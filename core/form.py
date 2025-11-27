@@ -440,7 +440,7 @@ class ReservasForm(forms.ModelForm):
             'Nombre_Cliente', 'Apellidos_Cliente', 'Telefono', 'Correo','nro_vuelo',
             'Origen', 'Destino','Monto_tarifa', 'Dirrecion', 'Fecha', 'Hora',
             'Cantidad_pasajeros', 'Cantidad_maletas', 'Confirmacion',
-            'Chofer_asignado'
+            'Chofer_asignado', 'Comentario'
         ]
         widgets = {
             'Nombre_Cliente': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'}),
@@ -466,6 +466,8 @@ class ReservasForm(forms.ModelForm):
             'Cantidad_maletas': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 2}),
             'Chofer_asignado': forms.Select(attrs={'class': 'form-select'}),
             'Confirmacion': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            
+            'Comentario': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'En este campo especifica la cantidad de adultos y de niños que viajan y algun otro detalle que consideres relevante.'}),
         }
     
     # Si quisieras asegurarte de que la Comuna de Origen NO sea igual a la Comuna de Destino
