@@ -169,7 +169,15 @@ class Reservas(models.Model):
     ]
     estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
     Chofer_asignado = models.ForeignKey(Conductores, on_delete=models.SET_NULL, null=True, blank=True)
-
+    MEDIOS_PAGO = [
+        ('TARJETA', 'tarjeta'),
+        ('EFECTIVO', 'efectivo'),
+        ('TRANSFERENCIA', 'transferencia'),
+    ]
+    mediopago = models.CharField(max_length=15, choices=MEDIOS_PAGO, default='tarjeta')
+    Confirmacion_pagoConductor = models.BooleanField(default=False)
+    Comentarcio = models.TextField(max_length=100,blank=True, default="")
+    
     def __str__(self):
         return self.Id_reserva
 
