@@ -169,7 +169,15 @@ class Reservas(models.Model):
     ]
     estado = models.CharField(max_length=10, choices=ESTADOS, default='PENDIENTE')
     Chofer_asignado = models.ForeignKey(Conductores, on_delete=models.SET_NULL, null=True, blank=True)
-
+    MEDIOS_PAGO = [
+        ('TARJETA', 'tarjeta'),
+        ('EFECTIVO', 'efectivo'),
+        ('TRANSFERENCIA', 'transferencia'),
+    ]
+    mediopago = models.CharField(max_length=14, choices=MEDIOS_PAGO, default='tarjeta')
+    Confirmacion_pagoConductor = models.BooleanField(default=False)
+    Comentario = models.TextField(max_length=100, blank=True, default="")
+    
     def __str__(self):
         return self.Id_reserva
 
@@ -213,9 +221,17 @@ class ReservasWeb(models.Model):
         ]
     )
     Vehiculo_solicitado = models.CharField(max_length=30, blank=True, default="")
-    Comentario = models.TextField(blank=True, default="")
+    Comentario = models.TextField(max_length=100, blank=True, default="")
     Confirmacion = models.BooleanField(default=False)
+    MEDIOS_PAGO = [
+        ('TARJETA', 'tarjeta'),
+        ('EFECTIVO', 'efectivo'),
+        ('TRANSFERENCIA', 'transferencia'),
+    ]
+    mediopago = models.CharField(max_length=15, choices=MEDIOS_PAGO, default='tarjeta')
+    Confirmacion_pagoConductor = models.BooleanField(default=False)
     Creado_en = models.DateTimeField(auto_now_add=True)
+    
 
     def __str__(self):
         return f"Reserva web de {self.Nombre_Cliente} para {self.Fecha}"
