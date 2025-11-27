@@ -39,6 +39,7 @@ urlpatterns = [
     path('administrador/reservas-web/aceptar', views.aceptar_reserva_web, name='aceptar_reserva_web'),
     path('administrador/reservas-web/rechazar', views.rechazar_reserva_web, name='rechazar_reserva_web'),
     path('administrador/reservas/crear', views.crear_reserva_admin, name='crear_reserva_admin'),
+    path('administrador/reservas/<int:reserva_id>/excel', views.exportar_reserva_excel, name='exportar_reserva_excel'),
     path('delete_Tarifa/<id>',views.delete_Tarifa,name='delete_Tarifa'),
 
     # Login y Logout

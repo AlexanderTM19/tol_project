@@ -123,7 +123,7 @@
         <div class="d-flex align-items-center justify-content-between">
           <div>
             <div class="subtext">Total generado por la empresa</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ total_empresa }}"></span></div>
+            <div class="value-big"><span class="js-clp js-total-empresa" data-amount="{{ total_empresa }}"></span></div>
           </div>
           <div><i class="fa-solid fa-wallet fa-2x"></i></div>
         </div>
@@ -133,8 +133,8 @@
       <div class="wallet-card light p-4 h-100">
         <div class="d-flex align-items-center justify-content-between">
           <div>
-            <div class="subtext">Ingreso personal</div>
-            <div class="value-big"><span class="js-clp" data-amount="{{ ingreso_personal }}"></span></div>
+            <div class="subtext">Ingreso estimado</div>
+            <div class="value-big"><span class="js-clp js-ingreso-personal" data-amount="{{ ingreso_personal }}"></span></div>
           </div>
           <div><i class="fa-solid fa-wallet fa-2x"></i></div>
         </div>
@@ -210,7 +210,20 @@
     const primary = '#0ea5e9', secondary = '#6366f1';
 
     // Formateador CLP
-    const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+  const fmtCLP = (n) => new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits: 0 }).format(n);
+  const totalEmpresaEl = document.querySelector('.js-total-empresa');
+  const ingresoPersonalEl = document.querySelector('.js-ingreso-personal');
+
+  function setCardAmounts(totalEmpresa, ingresoPersonal){
+    if (typeof totalEmpresa === 'number' && totalEmpresaEl){
+      totalEmpresaEl.dataset.amount = totalEmpresa;
+      totalEmpresaEl.textContent = fmtCLP(totalEmpresa);
+    }
+    if (typeof ingresoPersonal === 'number' && ingresoPersonalEl){
+      ingresoPersonalEl.dataset.amount = ingresoPersonal;
+      ingresoPersonalEl.textContent = fmtCLP(ingresoPersonal);
+    }
+  }
 
     // -------------------------------------------------------------------------
     // 2. GRÁFICO DE INGRESOS (INCOME CHART)
@@ -293,6 +306,8 @@
 
         const labels = payload.labels || [];
         const datasets = payload.datasets || [];
+        const totalEmpresa = typeof payload.total_empresa === 'number' ? payload.total_empresa : null;
+        const ingresoPersonal = typeof payload.ingreso_personal === 'number' ? payload.ingreso_personal : null;
 
         const hasData = datasets.length > 0 && datasets.some(ds => Array.isArray(ds.data) && ds.data.some(v => v !== null && v !== 0));
         incomeNoDataEl.style.display = hasData ? 'none' : 'block';
@@ -312,6 +327,10 @@
         }
         incomeChart.options.plugins.legend.display = incomeChart.data.datasets.length > 1;
         incomeChart.update();
+
+        if (totalEmpresa !== null || ingresoPersonal !== null){
+          setCardAmounts(totalEmpresa ?? parseFloat(totalEmpresaEl?.dataset.amount || 0), ingresoPersonal ?? parseFloat(ingresoPersonalEl?.dataset.amount || 0));
+        }
       }catch(err){
         console.error('Error fetching estadisticas data', err);
         incomeNoDataEl.style.display = 'block';

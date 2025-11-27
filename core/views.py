@@ -10,7 +10,7 @@ from .form import ClientesForm, UsuariosForm, Rol_Form, CustomLoginForm, Passwor
 from .models import Clientes, Usuarios, Rol_usuario, Conductores, Vehiculos, Tarifas, Reservas, ReservasWeb,Trasporte, PasswordResetToken
 import random
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import secrets
 from django.core.mail import send_mail
 from django.urls import reverse
@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 from django.utils import timezone
 from django.contrib import messages 
+from openpyxl import Workbook
 
 # âŒ FUNCIÃ“N events_json ELIMINADA para revertir la funcionalidad AJAX del calendario.
 # def events_json(request):
@@ -373,12 +374,9 @@ def api_ingresos_anual(request, year):
 @user_passes_test(es_admin)
 @require_GET
 def estadisticas_data(request):
-    """Endpoint genÃ©rico que devuelve etiquetas y datasets para el grÃ¡fico de ingresos.
-    ParÃ¡metros GET:
-      - period: 'anio'|'mes'|'semana'|'dia'|'rango' (default 'anio')
-      - year, month, week, date, from1, to1, from2, to2 segÃºn el periodo
-    Respuesta JSON: { labels: [...], datasets: [ { label, data }, ... ] }
-    Los montos se devuelven en 'miles' (divididos por 1000) para coincidir con la UI.
+    """Endpoint de ingresos con totales filtrados.
+    Devuelve etiquetas/datasets (montos en miles para el gr?fico) y totales en CLP:
+    { labels, datasets, total_empresa, ingreso_personal }
     """
     period = request.GET.get('period', 'anio')
     try:
@@ -387,12 +385,16 @@ def estadisticas_data(request):
             year = int(request.GET.get('year', now.year))
             labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
             values = [0] * 12
+            total_empresa = 0
             q = Reservas.objects.filter(estado='REALIZADO', Fecha__year=year).values('Fecha__month').annotate(total=Sum('Monto_tarifa'))
             for it in q:
                 m = int(it.get('Fecha__month', 1)) - 1
-                values[m] = round(((it.get('total') or 0) / 1000), 2)
+                monto = (it.get('total') or 0)
+                total_empresa += monto
+                values[m] = round((monto / 1000), 2)
             datasets = [{ 'label': f'Ingresos {year}', 'data': values }]
-            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+            ingreso_personal = int(total_empresa * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
 
         if period == 'mes':
             year = int(request.GET.get('year', now.year))
@@ -401,28 +403,34 @@ def estadisticas_data(request):
             dim = monthrange(year, month)[1]
             labels = [str(i) for i in range(1, dim+1)]
             values = [0] * dim
+            total_empresa = 0
             q = Reservas.objects.filter(estado='REALIZADO', Fecha__year=year, Fecha__month=month).values('Fecha__day').annotate(total=Sum('Monto_tarifa'))
             for it in q:
                 d = int(it.get('Fecha__day', 1)) - 1
                 if 0 <= d < dim:
-                    values[d] = round(((it.get('total') or 0) / 1000), 2)
+                    monto = (it.get('total') or 0)
+                    total_empresa += monto
+                    values[d] = round((monto / 1000), 2)
             datasets = [{ 'label': f'Ingresos {month}/{year}', 'data': values }]
-            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+            ingreso_personal = int(total_empresa * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
 
         if period == 'semana':
-            # esperar year y week (ISO week number)
             year = int(request.GET.get('year', now.year))
             week = int(request.GET.get('week', now.isocalendar()[1]))
             import datetime as _dt
             monday = _dt.date.fromisocalendar(year, week, 1)
-            labels = ['Lun','Mar','MiÃ©','Jue','Vie','SÃ¡b','Dom']
+            labels = ['Lun','Mar','Mie','Jue','Vie','Sab','Dom']
             values = []
+            total_empresa = 0
             for i in range(7):
                 day = monday + _dt.timedelta(days=i)
                 total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                total_empresa += total
                 values.append(round((total / 1000), 2))
             datasets = [{ 'label': f'Ingresos semana {week}/{year}', 'data': values }]
-            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+            ingreso_personal = int(total_empresa * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
 
         if period == 'dia':
             date_str = request.GET.get('date', now.isoformat())
@@ -432,17 +440,21 @@ def estadisticas_data(request):
                 d = now
             labels = [f"{h}:00" for h in range(24)]
             values = [0] * 24
+            total_empresa = 0
             q = Reservas.objects.filter(estado='REALIZADO', Fecha=d)
             for r in q:
                 try:
                     h = int(r.Hora.hour)
                     if 0 <= h < 24:
-                        values[h] += (r.Monto_tarifa or 0)
+                        monto = (r.Monto_tarifa or 0)
+                        total_empresa += monto
+                        values[h] += monto
                 except Exception:
                     continue
             values = [ round((v / 1000), 2) for v in values ]
             datasets = [{ 'label': f'Ingresos {d.isoformat()}', 'data': values }]
-            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+            ingreso_personal = int(total_empresa * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
 
         if period == 'rango':
             def parse_date(s):
@@ -460,13 +472,15 @@ def estadisticas_data(request):
             d2 = parse_date(to1)
             labels = []
             datasets = []
+            total_empresa = 0
             if d1 and d2 and d1 <= d2:
                 days = (d2 - d1).days + 1
-                labels = [f'DÃ­a {i+1}' for i in range(days)]
+                labels = [f'D?a {i+1}' for i in range(days)]
                 vals = []
                 for i in range(days):
                     day = d1 + timedelta(days=i)
                     total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
+                    total_empresa += total
                     vals.append(round((total / 1000), 2))
                 datasets.append({ 'label': f'Rango 1 ({d1} a {d2})', 'data': vals })
 
@@ -475,28 +489,27 @@ def estadisticas_data(request):
                 d4 = parse_date(to2)
                 if d3 and d4 and d3 <= d4:
                     days2 = (d4 - d3).days + 1
-                    # asegurar labels lo suficientemente largos
                     maxlen = max(len(labels), days2)
                     if len(labels) < maxlen:
-                        labels = labels + [f'DÃ­a {i+1}' for i in range(len(labels), maxlen)]
+                        labels = labels + [f'D?a {i+1}' for i in range(len(labels), maxlen)]
                     vals2 = []
                     for i in range(days2):
                         day = d3 + timedelta(days=i)
                         total = Reservas.objects.filter(estado='REALIZADO', Fecha=day).aggregate(total=Sum('Monto_tarifa')).get('total') or 0
                         vals2.append(round((total / 1000), 2))
-                    # pad
                     if len(vals2) < maxlen:
                         vals2 = vals2 + [None] * (maxlen - len(vals2))
                     datasets.append({ 'label': f'Rango 2 ({d3} a {d4})', 'data': vals2 })
 
-            return JsonResponse({ 'labels': labels, 'datasets': datasets })
+            ingreso_personal = int(total_empresa * 0.20)
+            return JsonResponse({ 'labels': labels, 'datasets': datasets, 'total_empresa': total_empresa, 'ingreso_personal': ingreso_personal })
 
-        # default: vacÃ­o
-        return JsonResponse({ 'labels': [], 'datasets': [] })
+        return JsonResponse({ 'labels': [], 'datasets': [], 'total_empresa': 0, 'ingreso_personal': 0 })
 
     except Exception as e:
         return JsonResponse({ 'error': str(e) }, status=500)
 #-------------------------------------------------------------------------------------------------------------------------------
+
 @login_required
 @user_passes_test(es_admin)
 def estadisticas(request):
@@ -927,6 +940,96 @@ def _construir_eventos_reservas():
     return eventos
 
 
+def _enviar_correo_confirmacion_reserva(reserva):
+    """
+    Envía un correo de confirmación de recepción de reserva al cliente (si hay correo).
+    No afirma confirmación definitiva, solo que la solicitud fue recibida.
+    """
+    destinatario = (reserva.Correo or '').strip()
+    if not destinatario:
+        return
+    try:
+        nombre = f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip() or "Cliente"
+        fecha_hora = datetime.combine(reserva.Fecha, reserva.Hora).strftime('%d-%m-%Y %H:%M')
+        origen = reserva.Origen.Nombre_Comuna if reserva.Origen else 'Por confirmar'
+        destino = reserva.Destino.Nombre_Comuna if reserva.Destino else 'Por confirmar'
+        direccion = reserva.Dirrecion or 'Por confirmar'
+        nro_vuelo = reserva.nro_vuelo or 'No informado'
+        tarifa = reserva.Monto_tarifa if reserva.Monto_tarifa not in (None, '') else 'Por confirmar'
+
+        asunto = "Hemos recibido su solicitud de reserva"
+        mensaje = (
+            f"Estimado/a {nombre},\n\n"
+            "Hemos recibido su solicitud de reserva con exito. Enviaremos la confirmacion o aceptacion en breve.\n\n"
+            "Detalle de la solicitud:\n"
+            f"- Fecha y hora: {fecha_hora}\n"
+            f"- Origen: {origen}\n"
+            f"- Destino: {destino}\n"
+            f"- Direccion: {direccion}\n"
+            f"- Numero de vuelo: {nro_vuelo}\n"
+            f"- Tarifa: {tarifa}\n\n"
+            "Este correo es solo de recepcion. Nos contactaremos pronto para confirmar o ajustar cualquier detalle.\n\n"
+            "Gracias por preferirnos.\n"
+        )
+        send_mail(
+            subject=asunto,
+            message=mensaje,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@tol.local'),
+            recipient_list=[destinatario],
+            fail_silently=True,
+        )
+    except Exception:
+        # No interrumpir el flujo principal si el correo falla
+        pass
+
+
+@login_required
+@user_passes_test(es_admin)
+@require_GET
+def exportar_reserva_excel(request, reserva_id):
+    """
+    Genera un archivo Excel con los datos clave de una reserva.
+    Incluye: nombre completo, fecha y hora, dirección exacta y comuna, número de vuelo y tarifa.
+    """
+    reserva = get_object_or_404(Reservas.objects.select_related('Origen', 'Destino'), pk=reserva_id)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reserva"
+
+    ws.append(["Nombre y apellido", "Fecha y hora", "Dirección exacta y comuna", "Número de vuelo", "Tarifa"])
+
+    fecha_hora = datetime.combine(reserva.Fecha, reserva.Hora)
+    comuna = ''
+    if reserva.Origen and reserva.Origen.Nombre_Comuna:
+        comuna = reserva.Origen.Nombre_Comuna
+    elif reserva.Destino and reserva.Destino.Nombre_Comuna:
+        comuna = reserva.Destino.Nombre_Comuna
+    direccion = reserva.Dirrecion or ''
+    direccion_completa = f"{direccion} - {comuna}" if comuna else direccion
+    tarifa = reserva.Monto_tarifa if reserva.Monto_tarifa is not None else ''
+
+    ws.append([
+        f"{reserva.Nombre_Cliente} {reserva.Apellidos_Cliente}".strip(),
+        fecha_hora.strftime('%d-%m-%Y %H:%M'),
+        direccion_completa,
+        reserva.nro_vuelo or '',
+        tarifa,
+    ])
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = min(max_length + 2, 50)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=reserva_{reserva.Id_reserva}.xlsx'
+    wb.save(response)
+    return response
+
+
 @login_required
 @user_passes_test(es_admin)
 def admin_config(request):
@@ -950,6 +1053,7 @@ def admin_config(request):
             # reserva_nueva.Confirmacion = True # Ejemplo
             
             reserva_nueva.save()
+            _enviar_correo_confirmacion_reserva(reserva_nueva)
             
             # Comportamiento POST/Redirect/Get (para envÃ­os tradicionales)
             return redirect('admin_config') 
@@ -995,6 +1099,7 @@ def crear_reserva_admin(request):
         if not reserva.estado:
             reserva.estado = 'PENDIENTE'
         reserva.save()
+        _enviar_correo_confirmacion_reserva(reserva)
         # Construir payload de evento para FullCalendar
         chofer_nombre = 'Sin asignar'
         if reserva.Chofer_asignado and reserva.Chofer_asignado.usuario:
@@ -1115,6 +1220,8 @@ def aceptar_reserva_web(request):
         Chofer_asignado=chofer,
         # Nota: El estado por defecto ('PENDIENTE') se mantiene a menos que lo especifiques aquÃ­.
     )
+
+    _enviar_correo_confirmacion_reserva(reserva_confirmada)
 
     # Preparar el objeto evento para el calendario
     evento = {
